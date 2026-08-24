@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - HOG BEER PUB</title>
+    <!-- Includem biblioteca EmailJS pentru trimiterea e-mailurilor (Partea 4) -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        :root {
+            --primary: #d97706;
+            --bg-dark: #111827;
+            --bg-card: #1f2937;
+            --text-light: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .checkout-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .checkout-section {
+            background-color: var(--bg-card);
+            padding: 25px;
+            border-radius: 12px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h2 {
+            color: var(--primary);
+            margin-top: 0;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: white;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #374151;
+            padding: 10px 0;
+            font-size: 14px;
+        }
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 15px;
+        }
+        .pay-btn {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        .pay-btn:hover {
+            background-color: #b45309;
+        }
+        .pay-btn:disabled {
+            background-color: #4b5563;
+            cursor: not-allowed;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        /* Modal Succes */
+        #successModal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--bg-card); padding: 40px; border-radius: 12px;
+            text-align: center; max-width: 400px;
+        }
+        .modal-content h3 { color: #10b981; font-size: 24px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div>
+        <a href="/" class="back-link">← Înapoi la Meniu</a>
+
+        <div class="checkout-container">
+            <!-- PARTEA STÂNGĂ: Formularul de date -->
+            <div class="checkout-section">
+                <h2>1. Datele tale de contact</h2>
+                <div class="form-group">
+                    <label>Nume și Prenume *</label>
+                    <input type="text" id="clientName" required placeholder="Ex: Ion Popescu">
+                </div>
+                <div class="form-group">
+                    <label>Număr de Telefon *</label>
+                    <input type="tel" id="clientPhone" required placeholder="Ex: 069 123 456">
+                </div>
+                <div class="form-group">
+                    <label>E-mail (pentru bonul fiscal) *</label>
+                    <input type="email" id="clientEmail" required placeholder="Ex: ion@mail.md">
+                </div>
+
+                <h2 style="margin-top: 30px;">2. Plata cu Cardul</h2>
+                <div class="form-group">
+                    <label>Număr Card (Test/Fictiv)</label>
+                    <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Data Expirării</label>
+                        <input type="text" placeholder="LL/AA" maxlength="5">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>CVV</label>
+                        <input type="text" placeholder="123" maxlength="3">
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARTEA DREAPTĂ: Sumarul Comenzii -->
+            <div class="checkout-section">
+                <h2>3. Sumar Comandă</h2>
+                <div id="orderSummary">
+                    <!-- Aici se vor genera produsele din localStorage -->
+                </div>
+                <div class="order-total">
+                    <span>Total Achitare:</span>
+                    <span id="finalTotal">0 MDL</span>
+                </div>
+
+                <button class="pay-btn" id="payButton" onclick="processPayment()">💳 Achită Acum</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMARE (Apare după plată) -->
+    <div id="successModal">
+        <div class="modal-content">
+            <h3>Tranzacție Reușită! 🎉</h3>
+            <p>Comanda ta a fost trimisă către bar. Vei primi confirmarea pe e-mail.</p>
+            <button class="pay-btn" onclick="window.location.href='/'">Întoarce-te la Meniu</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. Inițializăm EmailJS (vei pune cheile tale mai târziu)
+        (function() {
+            // emailjs.init("CHEIA_TA_PUBLICA");
+        })();
+
+        let finalCart = [];
+        let finalAmount = 0;
+
+        // 2. Când se încarcă pagina, luăm datele din index.html
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedCart = localStorage.getItem('hog_pub_cart');
+
+            if (!savedCart) {
+                alert("Coșul este gol! Te redirecționăm la meniu.");
+                window.location.href = "index.html";
+                return;
+            }
+
+            finalCart = JSON.parse(savedCart);
+            renderOrderSummary();
+        });
+
+        // 3. Afișăm produsele în sumar
+        function renderOrderSummary() {
+            const container = document.getElementById('orderSummary');
+            container.innerHTML = '';
+            finalAmount = 0;
+
+            finalCart.forEach(item => {
+                const totalItemPrice = item.price * item.qty;
+                finalAmount += totalItemPrice;
+
+                container.innerHTML += `
+                    <div class="order-item">
+                        <div>
+                            <strong>${item.qty}x</strong> ${item.name} <br>
+                            <span style="color: #9ca3af; font-size: 12px;">${item.variantSize}</span>
+                        </div>
+                        <div>${totalItemPrice} MDL</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('finalTotal').innerText = `${finalAmount} MDL`;
+        }
+
+        // 4. Procesarea "Plății" și trimiterea e-mailurilor
+        function processPayment() {
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const email = document.getElementById('clientEmail').value;
+            const btn = document.getElementById('payButton');
+
+            if (!name || !phone || !email) {
+                alert("Te rugăm să completezi toate datele de contact (Nume, Telefon, E-mail)!");
+                return;
+            }
+
+            // Simulăm încărcarea procesatorului de plată (2 secunde)
+            btn.innerText = "⏳ Se procesează...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                // Generăm un bon sub formă de text pentru e-mail
+                let orderText = finalCart.map(item => `${item.qty}x ${item.name} (${item.variantSize}) - ${item.price * item.qty} MDL`).join("\\n");
+
+                // Parametrii pe care îi trimitem către EmailJS
+                const templateParams = {
+                    client_name: name,
+                    client_phone: phone,
+                    client_email: email,
+                    order_details: orderText,
+                    total_amount: finalAmount + " MDL"
+                };
+
+                /* AICI VOM ACTIVA TRIMITEREA REALĂ DUPĂ CE FACI CONTUL
+                emailjs.send("SERVICE_ID", "TEMPLATE_ID", templateParams)
+                    .then(function(response) {
+                        console.log("SUCCESS!", response.status, response.text);
+                    }, function(error) {
+                        console.log("FAILED...", error);
+                    });
+                */
+
+                // Afișăm succesul
+                document.getElementById('successModal').style.display = "flex";
+
+                // Golim coșul pentru o nouă comandă
+                localStorage.removeItem('hog_pub_cart');
+
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

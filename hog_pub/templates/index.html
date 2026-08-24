@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOG BEER PUB - Meniu Interactiv</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #e67e22;
+            --accent-hover: #d35400;
+            --text-color: #f5f5f5;
+            --text-muted: #aaa;
+            --border-color: #333;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding-bottom: 80px;
+
+    /* SETĂRILE PENTRU IMAGINEA DE FUNDAL */
+    background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('/static/img/fundal_hog.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; /* Ține imaginea nemișcată când dai scroll prin produse */
+}
+
+        /* HEADER */
+        header {
+            position: sticky; top: 0; z-index: 100;
+            background-color: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 1.4rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+
+        .lang-select {
+            background: #2a2a2a; color: #fff; border: 1px solid var(--border-color);
+            padding: 6px 10px; border-radius: 5px; cursor: pointer; outline: none;
+        }
+
+        .cart-btn {
+            background: var(--accent); color: #fff; border: none;
+            padding: 8px 16px; border-radius: 20px; font-weight: bold;
+            cursor: pointer; display: flex; align-items: center; gap: 8px;
+            transition: background 0.2s;
+        }
+        .cart-btn:hover { background: var(--accent-hover); }
+
+        /* BARĂ CATEGORII */
+        .categories-bar {
+            display: flex; gap: 10px; overflow-x: auto; padding: 15px 20px;
+            background: #181818; border-bottom: 1px solid var(--border-color);
+            scrollbar-width: none;
+        }
+        .categories-bar::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            background: #2a2a2a; color: var(--text-muted); border: none;
+            padding: 8px 18px; border-radius: 20px; white-space: nowrap;
+            cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+        }
+        .cat-btn.active, .cat-btn:hover { background: var(--accent); color: #fff; }
+
+        /* GRILĂ PRODUSE */
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .products-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;
+        }
+
+        .product-card {
+            background: var(--card-bg); border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border-color); display: flex; flex-direction: column;
+            justify-content: space-between; transition: transform 0.2s;
+        }
+        .product-card:hover { transform: translateY(-4px); }
+        .product-img { width: 100%; height: 160px; object-fit: cover; background: #2a2a2a; }
+        .product-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .product-title { font-size: 1.05rem; margin-bottom: 6px; }
+        .product-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; flex-grow: 1; }
+
+        .variant-select {
+            width: 100%; padding: 8px; background: #2a2a2a; color: #fff;
+            border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 12px;
+        }
+
+        .card-bottom { display: flex; justify-content: space-between; align-items: center; }
+        .price { font-size: 1.15rem; font-weight: bold; color: var(--accent); }
+        .add-btn {
+            background: var(--accent); color: #fff; border: none;
+            padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;
+        }
+        .add-btn:hover { background: var(--accent-hover); }
+
+        /* COȘ LATERAL */
+        .cart-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); opacity: 0; pointer-events: none;
+            transition: opacity 0.3s; z-index: 200;
+        }
+        .cart-overlay.open { opacity: 1; pointer-events: all; }
+
+        .cart-drawer {
+            position: fixed; top: 0; right: -400px; width: 100%; max-width: 380px; height: 100%;
+            background: var(--card-bg); border-left: 1px solid var(--border-color);
+            z-index: 201; transition: right 0.3s ease-in-out; display: flex; flex-direction: column;
+        }
+        .cart-overlay.open + .cart-drawer, .cart-drawer.open { right: 0; }
+
+        .cart-header {
+            padding: 20px; border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .close-cart { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+
+        .cart-body { padding: 20px; flex-grow: 1; overflow-y: auto; }
+        .cart-item {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;
+        }
+        .item-details h4 { font-size: 0.95rem; }
+        .item-details p { font-size: 0.8rem; color: var(--text-muted); }
+        .qty-controls { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+        .qty-btn {
+            background: #333; color: #fff; border: none; width: 24px; height: 24px;
+            border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+
+        .cart-footer { padding: 20px; border-top: 1px solid var(--border-color); background: #181818; }
+        .cart-total { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; }
+        .checkout-btn {
+            width: 100%; background: var(--accent); color: #fff; border: none;
+            padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;
+        }
+
+        .floating-phone {
+            position: fixed; bottom: 20px; right: 20px; background: #27ae60; color: #fff;
+            width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; text-decoration: none; font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 150;
+        }
+    </style>
+</head>
+<body>
+<a href="tel:+373060567666" class="floating-phone" title="Sună la Pub">📞</a>
+<body>
+
+    <header>
+        <div class="logo">🐗 HOG BEER PUB</div>
+        <div class="header-actions">
+            <select class="lang-select" id="langSelect" onchange="changeLanguage(this.value)">
+                <option value="ro">RO 🇲🇩</option>
+                <option value="ru">RU 🇷🇺</option>
+                <option value="en">EN 🇬🇧</option>
+            </select>
+            <button class="cart-btn" onclick="toggleCart(true)">
+                🛒 <span id="cartCount">0</span> | <span id="cartTotalHeader">0 MDL</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="categories-bar" id="categoriesBar"></div>
+
+    <div class="container">
+        <div class="products-grid" id="productsGrid"></div>
+    </div>
+
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h3 id="cartTitleText">Coșul tău</h3>
+            <button class="close-cart" onclick="toggleCart(false)">&times;</button>
+        </div>
+        <div class="cart-body" id="cartItems"></div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span id="totalLabelText">Total:</span>
+                <span id="cartTotalDrawer">0 MDL</span>
+            </div>
+            <button class="checkout-btn" onclick="goToCheckout()" id="checkoutBtnText">Finalizează Comanda</button>
+        </div>
+    </div>
+
+    <a href="tel:+37300000000" class="floating-phone" title="Sună la Pub">📞</a>
+
+    <script>
+        const productsData = [
+            // --- BERE DRAFT ---
+            { id: 1, category: "bere_draft", name: { ro: "Stella Artois Draft", ru: "Stella Artois (Разливное)", en: "Stella Artois Draft" }, desc: { ro: "Bere blondă draft", ru: "Светлое разливное пиво", en: "Draft blonde beer" }, img: "https://i.pinimg.com/736x/19/53/41/1953418f6e4cc6c64a792944e96feacc.jpg", variants: [{ size: "0.33L", price: 30 }, { size: "0.5L", price: 40 }] },
+            { id: 2, category: "bere_draft", name: { ro: "Krombacher", ru: "Krombacher", en: "Krombacher" }, desc: { ro: "Bere germană premium draft", ru: "Премиальное немецкое пиво", en: "Premium German draft beer" }, img: "https://www.imbissgrill.ro/img-oferte/20150418/0846069613_0_huge.jpg", variants: [{ size: "0.33L", price: 31 }, { size: "0.5L", price: 42 }] },
+            { id: 3, category: "bere_draft", name: { ro: "Staropramen", ru: "Staropramen", en: "Staropramen" }, desc: { ro: "Bere cehă clasică draft", ru: "Классическое чешское пиво", en: "Classic Czech draft beer" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTow3WYehhm323_IF8NU-NoAMFxFIiw6LZoJrOOnWeJIKaL6z-GE407_liz&s=10", variants: [{ size: "0.33L", price: 28 }, { size: "0.5L", price: 38 }] },
+            { id: 4, category: "bere_draft", name: { ro: "Staropramen Nefiltrat", ru: "Staropramen Нефильтрованное", en: "Staropramen Unfiltered" }, desc: { ro: "Bere nefiltrată aromată", ru: "Нефильтрованное пиво", en: "Unfiltered draft beer" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwKL1X0h0lA002U3dJCeIexAnSWG2pIx9j8MEQw3TqiQ&s", variants: [{ size: "0.33L", price: 30 }, { size: "0.5L", price: 40 }] },
+            { id: 5, category: "bere_draft", name: { ro: "Kronenbourg 1664 Blanc", ru: "Kronenbourg 1664 Blanc", en: "Kronenbourg 1664 Blanc" }, desc: { ro: "Bere din grâu cu note de citrice", ru: "Пшеничное пиво с цитрусом", en: "Wheat beer with citrus notes" }, img: "https://hophey.ua/upload/iblock/3dc/7f34pswrtry2cw8yhla40w8f70z6pssa/pyvo-kronenbourg-1664-blanc.jpg", variants: [{ size: "0.33L", price: 30 }, { size: "0.5L", price: 40 }] },
+            { id: 6, category: "bere_draft", name: { ro: "Kozel Černý (Brună)", ru: "Kozel Černý (Темное)", en: "Kozel Dark" }, desc: { ro: "Bere brună fină", ru: "Темное мягкое пиво", en: "Smooth dark beer" }, img: "https://elipili.md/wp-content/uploads/2020/04/Kozel_Bruna.png", variants: [{ size: "0.33L", price: 17 }, { size: "0.5L", price: 25 }] },
+            { id: 7, category: "bere_draft", name: { ro: "Zlatý Ron", ru: "Zlatý Ron", en: "Zlatý Ron" }, desc: { ro: "Bere blondă proaspătă", ru: "Свежее светлое пиво", en: "Fresh lager" }, img: "https://images.unsplash.com/photo-1567696911980-2eed69a46042?w=400", variants: [{ size: "0.33L", price: 23 }, { size: "0.5L", price: 30 }] },
+            { id: 8, category: "bere_draft", name: { ro: "Golden Lager Nefiltrat", ru: "Golden Lager Нефильтрованное", en: "Golden Lager Unfiltered" }, desc: { ro: "Lager nefiltrat", ru: "Нефильтрованный лагер", en: "Unfiltered lager" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHt5U5xpwa8geVPlac8vLdY1Nx25GEGh3AnZ-_zY2Rxg&s", variants: [{ size: "0.5L", price: 23 }, { size: "1L", price: 46 }] },
+            { id: 9, category: "bere_draft", name: { ro: "Golden Lager", ru: "Golden Lager", en: "Golden Lager" }, desc: { ro: "Lager auriu clasic", ru: "Золотистый лагер", en: "Golden lager" }, img: "https://lamonicabeverages.com/wp-content/uploads/2020/05/Golden-Draft-bottle-1.jpg", variants: [{ size: "0.5L", price: 23 }, { size: "1L", price: 46 }] },
+            { id: 10, category: "bere_draft", name: { ro: "Jigulevskoe", ru: "Жигулевское", en: "Jigulevskoe" }, desc: { ro: "Bere tradițională", ru: "Традиционное пиво", en: "Traditional beer" }, img: "https://alir.md/content/catalog/products/fy6uef_g.jpg", variants: [{ size: "0.5L", price: 17 }, { size: "1L", price: 34 }] },
+            { id: 11, category: "bere_draft", name: { ro: "Gold Beer", ru: "Gold Beer", en: "Gold Beer" }, desc: { ro: "Bere blondă răcoritoare", ru: "Освежающее светлое пиво", en: "Refreshing lager" }, img: "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=400", variants: [{ size: "0.5L", price: 23 }, { size: "1L", price: 46 }] },
+            { id: 12, category: "bere_draft", name: { ro: "Efes Blanch", ru: "Efes Blanch", en: "Efes Blanch" }, desc: { ro: "Bere albă nefiltrată", ru: "Белое нефильтрованное пиво", en: "White unfiltered beer" }, img: "https://lcdn.mediagalaxy.ro/Bauturi/Bere/EFES/BER3109/BER3109_41_bb69ed02.jpg", variants: [{ size: "0.5L", price: 35 }, { size: "1L", price: 70 }] },
+            { id: 13, category: "bere_draft", name: { ro: "Hopfenbrau", ru: "Hopfenbrau", en: "Hopfenbrau" }, desc: { ro: "Bere specială de la hram", ru: "Особое светлое пиво", en: "Special lager" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuI8d_Zr3Lb8YvO-glTN1MjVg9QQ6ZQCVD8b0rRATyww&s=10", variants: [{ size: "0.5L", price: 25 }, { size: "1L", price: 50 }] },
+            { id: 14, category: "bere_draft", name: { ro: "Cvas / Bragă", ru: "Квас", en: "Kvass" }, desc: { ro: "Cvas tradițional rece", ru: "Традиционный холодный квас", en: "Traditional cold kvass" }, img: "https://valmiermuiza.lv/cdn/shop/products/valmiermuiza-alus-05-templatecopy_2048x.webp?v=1724323487", variants: [{ size: "0.5L", price: 13 }, { size: "1L", price: 26 }] },
+
+            // --- BERE LA STICLĂ ---
+            { id: 15, category: "bere_stycla", name: { ro: "Stella Artois Sticlă", ru: "Stella Artois Бут.", en: "Stella Artois Bottle" }, desc: { ro: "Sticlă 0.5L", ru: "Бутылка 0.5л", en: "Bottle 0.5L" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-p03TfDksKAix48rFCN7GoSYfwcVkvFtgIOeGVZBbAPcnHsNqpV5O6gFS&s=10", variants: [{ size: "0.5L", price: 45 }] },
+            { id: 16, category: "bere_stycla", name: { ro: "Budweiser Budvar", ru: "Budweiser Budvar", en: "Budweiser Budvar" }, desc: { ro: "Sticlă 0.5L", ru: "Бутылка 0.5л", en: "Bottle 0.5L" }, img: "https://alcomarket.md/public/products/thumbs/items-5689-2272.png", variants: [{ size: "0.5L", price: 40 }] },
+            { id: 17, category: "bere_stycla", name: { ro: "Beck's", ru: "Beck's", en: "Beck's" }, desc: { ro: "Sticlă 0.5L", ru: "Бутылка 0.5л", en: "Bottle 0.5L" }, img: "https://straus.s3.amazonaws.com/media/CACHE_IMG/products2/5420985fee0e48f781b5174334dc7655/1547405b65accca4f8b47b94cd5b7b89.webp", variants: [{ size: "0.5L", price: 40 }] },
+            { id: 18, category: "bere_stycla", name: { ro: "Corona Extra", ru: "Corona Extra", en: "Corona Extra" }, desc: { ro: "Sticlă 0.5L cu lime", ru: "Бутылка 0.5л с лаймом", en: "Bottle 0.5L with lime" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDBVI6h4YrmpWSbjrev1vukOYFMGf5hYjlFnXu4jv74EXZ6mRh-uB3aYPD&s=10", variants: [{ size: "0.5L", price: 40 }] },
+            { id: 19, category: "bere_stycla", name: { ro: "Corona Extra Fără Alcool", ru: "Corona Extra б/а", en: "Corona Extra Non-Alcoholic" }, desc: { ro: "Sticlă 0.33L fără alcool", ru: "Бутылка 0.33л б/а", en: "Bottle 0.33L N/A" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTr_IrICNBxJpx9HXCp42WnnqdcAUk3dSzqXFhEeynQasS3wLsJe4viA54&s=10", variants: [{ size: "0.33L", price: 40 }] },
+
+            // --- COCKTAILURI ALCOOLICE ---
+            { id: 20, category: "cocktail", name: { ro: "Aperol", ru: "Апероль", en: "Aperol" }, desc: { ro: "Prosecco, Aperol, apă minerală", ru: "Просекко, Апероль, содовая", en: "Prosecco, Aperol, soda" }, img: "/static/img/image 4.jpg", variants: [{ size: "450 ml", price: 100 }] },
+            { id: 21, category: "cocktail", name: { ro: "Tequila Sunrise", ru: "Текила Санрайс", en: "Tequila Sunrise" }, desc: { ro: "Tequila, suc portocale, grenadine", ru: "Текила, апельсиновый сок, гренадин", en: "Tequila, orange juice, grenadine" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTih-2ene0VDYMTEUfM-3rE4YgRXLmPU-uX2gnTaNqNj4-GdgbGOhEB1Z6E&s=10", variants: [{ size: "310 ml", price: 70 }] },
+            { id: 22, category: "cocktail", name: { ro: "Mojito Clasic", ru: "Мохито Классический", en: "Classic Mojito" }, desc: { ro: "Rom, mentă, lime, zahăr", ru: "Ром, мята, лайм, сахар", en: "Rum, mint, lime, sugar" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlIxcf_KqRjVe8DFJlu6rokTziQsoCB-T2Oi8V6Wxdvg&s=10", variants: [{ size: "350 ml", price: 70 }] },
+            { id: 23, category: "cocktail", name: { ro: "Mojito Căpșuni", ru: "Мохито Клубничный", en: "Strawberry Mojito" }, desc: { ro: "Rom, mentă, căpșuni, lime", ru: "Ром, мята, клубника, лайм", en: "Rum, mint, strawberry, lime" }, img: "https://i.pinimg.com/474x/70/a3/42/70a34253a88ecf33b2fd4636e5f87e11.jpg", variants: [{ size: "350 ml", price: 75 }] },
+            { id: 24, category: "cocktail", name: { ro: "Sex on the Beach", ru: "Секс на Пляже", en: "Sex on the Beach" }, desc: { ro: "Vodka, piersică, suc de merisoare", ru: "Водка, персик, клюквенный сок", en: "Vodka, peach, cranberry juice" }, img: "https://i.pinimg.com/736x/7b/29/53/7b29538ccff8c1390633df9007ea953f.jpg", variants: [{ size: "400 ml", price: 70 }] },
+            { id: 25, category: "cocktail", name: { ro: "Long Island", ru: "Лонг Айленд", en: "Long Island" }, desc: { ro: "5 băuturi tari amestecate cu cola", ru: "5 крепких напитков с колой", en: "5 spirits mixed with cola" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS63_7tJ5a9wOeoVMJYD7fYuE9DEK_zqVc4Ve7MEU4cxQ&s=10", variants: [{ size: "350 ml", price: 140 }] },
+            { id: 26, category: "cocktail", name: { ro: "Blue Lagoon", ru: "Голубая Лагуна", en: "Blue Lagoon" }, desc: { ro: "Vodka, Blue Curaçao, limonadă", ru: "Водка, Блю Курасао, лимонад", en: "Vodka, Blue Curaçao, lemonade" }, img: "https://www.liquor.com/thmb/-Ednp4bA2pQ79BY4Mf-2vdLegJI=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/__opt__aboutcom__coeus__resources__content_migration__liquor__2019__07__12152657__blue-lagoon-720x720-recipe-647fb82bc3214de68e0eed9aed5afbfa.jpg", variants: [{ size: "310 ml", price: 70 }] },
+            { id: 27, category: "cocktail", name: { ro: "Margarita Căpșuni", ru: "Клубничная Маргарита", en: "Strawberry Margarita" }, desc: { ro: "Tequila, piure de căpșuni", ru: "Текила, пюре клубники", en: "Tequila, strawberry puree" }, img: "https://cdn.shopify.com/s/files/1/0254/7715/2804/files/Refreshing-Strawberry-Margarita-with-a-Twist-of-Lime-Long_1024x1024.jpg?v=1737982667", variants: [{ size: "250 ml", price: 80 }] },
+            { id: 28, category: "cocktail", name: { ro: "Daiquiri", ru: "Дайкири", en: "Daiquiri" }, desc: { ro: "Rom alb, suc lime", ru: "Белый ром, сок лайма", en: "White rum, lime juice" }, img: "https://i.pinimg.com/736x/05/95/45/059545254c0c7caf63bac7a2af066d61.jpg", variants: [{ size: "200 ml", price: 70 }] },
+            { id: 29, category: "cocktail", name: { ro: "Pornstar Martini", ru: "Порнстар Мартини", en: "Pornstar Martini" }, desc: { ro: "Vodka vanilie, maracuja + Shot Prosecco", ru: "Ванильная водка, маракуйя + Шот Просекко", en: "Vanilla vodka, passion fruit + Prosecco shot" }, img: "https://hips.hearstapps.com/hmg-prod/images/porn-star-martini-lead-66325ab3a81ef.jpg?crop=1xw:1xh;center,top&resize=640:*", variants: [{ size: "350 ml", price: 110 }] },
+            { id: 30, category: "cocktail", name: { ro: "Negroni", ru: "Нигрони", en: "Negroni" }, desc: { ro: "Gin, Campari, Vermut roșu", ru: "Джин, Кампари, Красный Вермут", en: "Gin, Campari, Sweet Red Vermouth" }, img: "https://www.liquor.com/thmb/cv0NfK7-V2iGs1gdHbnOTMqOwT0=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/neighborhood-negroni-720x720-primary-727f7dc3a5d04a298d63977679efe856.jpg", variants: [{ size: "320 ml", price: 110 }] },
+
+            // --- BĂUTURI FĂRĂ ALCOOL & LIMONADE ---
+            { id: 31, category: "bauturi_fara_alcool", name: { ro: "Limonadă Mango-Maracuja", ru: "Лимонад Манго-Маракуйя", en: "Mango-Passion Fruit Lemonade" }, desc: { ro: "Piure mango, maracuja, apă minerală", ru: "Пюре манго, маракуйя, минералка", en: "Mango, passion fruit, soda" }, img: "https://i.pinimg.com/236x/70/dc/ac/70dcac089bdcd98270174e9a94ee5d5a.jpg", variants: [{ size: "350 ml", price: 55 }] },
+            { id: 32, category: "bauturi_fara_alcool", name: { ro: "Limonadă Fructe de Pădure", ru: "Лимонад Ягодный", en: "Berry Lemonade" }, desc: { ro: "Mix fructe roșii, lămâie", ru: "Ягодный микс, лимон", en: "Berry mix, lemon" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO_ZvI_josbtTpY0U37rVE1WwtaGm16S6-tVaM_maxvsxp_mdRuym1nANr&s=10", variants: [{ size: "350 ml", price: 55 }] },
+            { id: 33, category: "bauturi_fara_alcool", name: { ro: "Mojito Clasic b/a", ru: "Мохито Классический б/а", en: "Classic Mojito Non-Alc" }, desc: { ro: "Mentă, lime, apă minerală", ru: "Мята, лайм, минералка", en: "Mint, lime, soda water" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlIxcf_KqRjVe8DFJlu6rokTziQsoCB-T2Oi8V6Wxdvg&s=10", variants: [{ size: "350 ml", price: 50 }] },
+
+            // --- MÂNCARE CALDĂ & BURGERE ---
+            { id: 34, category: "mancare", name: { ro: "Burger Vită + Cartofi Fri", ru: "Бургер говяжий + картошка фри", en: "Beef Burger + Fries" }, desc: { ro: "Chiftea din carne de vită, sos special, cartofi fri", ru: "Говяжья котлета, особый соус, фри", en: "Beef patty, special sauce, fries" }, img: "/static/img/image1.jpg", variants: [{ size: "Porție", price: 140 }] },
+            { id: 35, category: "mancare", name: { ro: "Burger Pui + Cartofi Fri", ru: "Бургер куриный + картошка фри", en: "Chicken Burger + Fries" }, desc: { ro: "Chiftea din pui suculentă cu cartofi fri", ru: "Куриная котлета, фри", en: "Chicken patty with fries" }, img: "/static/img/image1.jpg", variants: [{ size: "Porție", price: 120 }] },
+            { id: 36, category: "mancare", name: { ro: "Creveți 30/40 prăjiți cu usturoi", ru: "Креветки 30/40 жареные с чесноком", en: "Garlic Fried Shrimps" }, desc: { ro: "Creveți mari rumeniți cu usturoi", ru: "Креветки с чесноком", en: "Shrimps fried with garlic" }, img: "/static/img/image 6.jpg", variants: [{ size: "350g", price: 170 }] },
+            { id: 37, category: "mancare", name: { ro: "Midii în sos de vin", ru: "Мидии в винном соусе", en: "Mussels in Wine Sauce" }, desc: { ro: "Midii proaspete în sos alb de vin", ru: "Мидии в белом вине", en: "Fresh mussels in white wine sauce" }, img: "/static/img/image15.jpg", variants: [{ size: "500g", price: 160 }] },
+            { id: 38, category: "mancare", name: { ro: "Cartofi fri", ru: "Картофель фри", en: "French Fries" }, desc: { ro: "Cartofi prăjiți crocanti", ru: "Хрустящий картофель фри", en: "Crispy french fries" }, img: "https://detoxinista.com/wp-content/uploads/2021/03/best-homemade-fries.jpg", variants: [{ size: "150g", price: 30 }] },
+
+            // --- PLATOURI & SNACK-URI ---
+            { id: 39, category: "snackuri", name: { ro: "Morskoi Mix (Fructe de mare)", ru: "Морской Микс", en: "Seafood Mix" }, desc: { ro: "Creveți, midii, calamari, legume", ru: "Креветки, мидии, кальмары, овощи", en: "Shrimps, mussels, calamari, veggies" }, img: "/static/img/image16.jpg", variants: [{ size: "500g", price: 400 }] },
+            { id: 40, category: "snackuri", name: { ro: "Miasnoi Mix (Carnuri)", ru: "Мясной Микс", en: "Meat Mix" }, desc: { ro: "Jamon, cârnați, stick-uri pui, urechi porc", ru: "Хамон, колбаски, куриные стиксы", en: "Jamon, sausages, chicken sticks" }, img: "https://media.istockphoto.com/id/507107218/photo/spanish-meat-tapas.jpg?s=612x612&w=0&k=20&c=y07h4F-ZcztGhzx7oQ6ZQWA8AeHMKPKQ2yqN2-80aEk=", variants: [{ size: "450g", price: 350 }] },
+            { id: 41, category: "snackuri", name: { ro: "Fistic", ru: "Фисташки", en: "Pistachios" }, desc: { ro: "Fistic prăjit și sărat", ru: "Фисташки жареные соленые", en: "Roasted salted pistachios" }, img: "https://i.pinimg.com/736x/15/49/6f/15496f72a0c1d0d7df60b7c5db292375.jpg", variants: [{ size: "100g", price: 75 }] },
+             // --- BĂUTURI TARI / SPIRITS ---
+            { id: 42, category: "bauturi_tari", name: { ro: "Whiskey Jack Daniel's", ru: "Виски Jack Daniel's", en: "Jack Daniel's Whiskey" }, desc: { ro: "Tennessee Whiskey clasic", ru: "Классический Теннесси Виски", en: "Classic Tennessee Whiskey" }, img: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=400", variants: [{ size: "50 ml", price: 65 }, { size: "0,7L", price: 780 }, { size: "1L", price: 1200 }] },
+            { id: 43, category: "bauturi_tari", name: { ro: "Vodka Absolut", ru: "Водка Absolut", en: "Absolut Vodka" }, desc: { ro: "Vodka premium suedeză", ru: "Шведская премиум водка", en: "Premium Swedish Vodka" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5wMh2d5A1sitxFVqPTj8y-v7MZr9kcMw1-Tr_qPZVvf47VCvjM4-tnrjO&s=10", variants: [{ size: "50 ml", price: 40 }, { size: "0.7L", price: 500 }] },
+            { id: 44, category: "bauturi_tari", name: { ro: "Rom Captain Morgan Spiced", ru: "Ром Captain Morgan", en: "Captain Morgan Rum" }, desc: { ro: "Rom condimentat", ru: "Пряный ром", en: "Spiced Rum" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqMKsveyLdrQFK_2TIMs_cHJqi4NiOlhTyNetnIXGwHelRSHyop0GHfkI&s=10", variants: [{ size: "50 ml", price: 45 }, { size: "0.7L", price: 550 }] },
+            { id: 45, category: "bauturi_tari", name: { ro: "Tequila Olmeca Blanco", ru: "Текила Olmeca", en: "Olmeca Blanco Tequila" }, desc: { ro: "Se servește cu sare și lime", ru: "Подается с солью и лаймом", en: "Served with salt and lime" }, img: "https://bottleofitaly.com/cdn/shop/files/Tequila-Olmeca-Blanco-Lt.1-bottle-of-italy-min.jpg?v=1713424531&width=530", variants: [{ size: "50 ml", price: 55 }] },
+
+            // --- SHOT-URI ---
+            { id: 46, category: "shoturi", name: { ro: "Shot B-52", ru: "Шот Б-52", en: "B-52 Shot" }, desc: { ro: "Kahlua, Baileys, Triplu Sec", ru: "Калуа, Бейлис, Трипл Сек", en: "Kahlua, Baileys, Triple Sec" }, img: "https://i.pinimg.com/474x/dc/c9/0c/dcc90c6c23a80291a3799e702901e481.jpg", variants: [{ size: "50 ml", price: 60 }] },
+            { id: 47, category: "shoturi", name: { ro: "Jägermeister ICE COLD", ru: "Jägermeister Ледяной", en: "Ice Cold Jägermeister" }, desc: { ro: "Lichior de ierburi servit rece", ru: "Травяной ликер холодной подачи", en: "Herbal liqueur served ice cold" }, img: "https://i.pinimg.com/736x/56/fb/e1/56fbe106d80e2e7753e61623bfbf1121.jpg", variants: [{ size: "50 ml", price: 50 }] },
+            { id: 48, category: "shoturi", name: { ro: "Kamikaze", ru: "Камикадзе", en: "Kamikaze" }, desc: { ro: "Vodka, Triplu Sec, Suc de lămâie", ru: "Водка, Трипл Сек, Лимонный сок", en: "Vodka, Triple Sec, Lemon juice" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSufsIil5Rllm6HWW2EopyF0O1di34yzWuQwwzMFOzHqtlH3OHiPqRc83A&s=10", variants: [{ size: "50 ml", price: 50 }] },
+
+            // --- MAI MULTĂ MÂNCARE ---
+            { id: 49, category: "mancare", name: { ro: "Aripioare de Pui Picante", ru: "Острые куриные крылышки", en: "Spicy Chicken Wings" }, desc: { ro: "Aripioare BBQ sau Sweet Chilli cu sos", ru: "Крылышки BBQ или Sweet Chilli", en: "BBQ or Sweet Chilli wings with sauce" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5GY3Q9SI2dUfRvwwUX0OMHILik7xzEbl0a-MO3RDlmXR1OVeyaX45Bv4&s=10", variants: [{ size: "300g", price: 110 }] },
+            { id: 50, category: "mancare", name: { ro: "Pizza Meat Lover", ru: "Пицца Мясная", en: "Meat Lover Pizza" }, desc: { ro: "Mozzarella, bacon, șuncă, salam pepperoni", ru: "Моцарелла, бекон, ветчина, пепперони", en: "Mozzarella, bacon, ham, pepperoni" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQwkQBbMjniVE7Q-d-JqODJSZfx6kflkQ-7fKghZp9yLbG9tI-62YBegD2&s=10", variants: [{ size: "32 cm", price: 150 }] },
+            { id: 51, category: "snackuri", name: { ro: "Platou Brânzeturi", ru: "Сырная тарелка", en: "Cheese Platter" }, desc: { ro: "Camembert, Dorblu, Parmesan, nuci, miere", ru: "Камамбер, Дорблю, Пармезан, орехи, мед", en: "Camembert, Dorblu, Parmesan, nuts, honey" }, img: "https://i.pinimg.com/736x/0e/2d/aa/0e2daa10fb86a1384b30e6ccfd510855.jpg", variants: [{ size: "400g", price: 250 }] },
+            { id: 52, category: "snackuri", name: { ro: "Inele de Calamar", ru: "Кольца кальмара", en: "Calamari Rings" }, desc: { ro: "Inele pane cu sos Tartar", ru: "Кольца в панировке с соусом Тартар", en: "Breaded rings with Tartar sauce" }, img: "https://vintagekitchennotes.com/wp-content/uploads/2025/01/Fried-breaded-calamari-rings.jpg", variants: [{ size: "200g", price: 85 }] },
+
+            // --- BĂUTURI CALDE ---
+            { id: 53, category: "bauturi_calde", name: { ro: "Espresso", ru: "Эспрессо", en: "Espresso" }, desc: { ro: "Cafea 100% Arabica", ru: "100% Арабика", en: "100% Arabica coffee" }, img: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=400", variants: [{ size: "30 ml", price: 20 }] },
+            { id: 54, category: "bauturi_calde", name: { ro: "Cappuccino", ru: "Капучино", en: "Cappuccino" }, desc: { ro: "Espresso, cremă de lapte", ru: "Эспрессо, молочная пена", en: "Espresso, steamed milk" }, img: "https://images.unsplash.com/photo-1534778101976-62847782c213?w=400", variants: [{ size: "200 ml", price: 30 }] },
+            { id: 55, category: "bauturi_calde", name: { ro: "Ceai", ru: "чай", en: "Tea" }, desc: { ro: "Infuzie naturală, mentă, miere", ru: "Натуральный чай, мята, мед", en: "Natural infusion, mint, honey" }, img: "https://i.pinimg.com/236x/2f/aa/96/2faa960b56c3c3ffa1b74c0eecabf913.jpg", variants: [{ size: "200 ml", price: 20 }] },
+            // --- PRODUSE RECUPERATE 56 - 78 ---
+            { id: 56, category: "snackuri", name: { ro: "Neci de Porc uscați", ru: "Ушки свиные сушеные", en: "Dried Pork Ears" }, desc: { ro: "Gustare picantă și crocantă la bere", ru: "Острая закуска к пиву", en: "Spicy beer snack" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-YqXdlsPajlttcSD9qbKelwONo0z0pYcKpwgksHD7Yom4fqpGYiT-ivYY&s=10", variants: [{ size: "100g", price: 55 }] },
+            { id: 57, category: "snackuri", name: { ro: "Alune Sărate", ru: "Арахис соленый", en: "Salted Peanuts" }, desc: { ro: "Alune prajite cu sare", ru: "Жареный арахис с солью", en: "Roasted salted peanuts" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSyllUdtihBcbhX_uzlDDNAUKmaMGMISH9OFY8gbqezod1X0q8nw5IWn4&s=10", variants: [{ size: "100g", price: 35 }] },
+            { id: 58, category: "snackuri", name: { ro: "Cajun Mix Nuci", ru: "Микс орехов Каджун", en: "Cajun Nut Mix" }, desc: { ro: "Mix de nuci condimentate", ru: "Смесь пикантных орехов", en: "Spicy nut mix" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA5R3G5hvQv_m8xWrD_xFw_v1z66nBAJOZOjGw5ZNnGxFmckbK5_q8W0ZH&s=10", variants: [{ size: "120g", price: 60 }] },
+            { id: 59, category: "snackuri", name: { ro: "Bastonașe de Cașcaval Pane", ru: "Сырные палочки", en: "Cheese Sticks" }, desc: { ro: "Servite cu sos de merişoare", ru: "Подаются с брусничным соусом", en: "Served with cranberry sauce" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTncqEK5J6PsjWJznFZmDcy7pS2dRVtwmeuCfsI38jy9z-MWghncsIwczA6&s=10", variants: [{ size: "200g", price: 80 }] },
+            { id: 60, category: "mancare", name: { ro: "Costite de Porc BBQ", ru: "Свиные ребра BBQ", en: "BBQ Pork Ribs" }, desc: { ro: "Coaste fragede caramelizate în sos BBQ", ru: "Нежные ребра в соусе BBQ", en: "Tender ribs caramelized in BBQ sauce" }, img: "https://butternutbakeryblog.com/wp-content/uploads/2020/03/Pouring-Caramel.jpg", variants: [{ size: "450g", price: 180 }] },
+            { id: 61, category: "mancare", name: { ro: "Nuggets de Pui", ru: "Куриные наггетсы", en: "Chicken Nuggets" }, desc: { ro: "Bucăți din piept de pui crocante", ru: "Хрустящее куриное филе", en: "Crispy chicken fillet" }, img: "https://images.unsplash.com/photo-1562967914-608f82629710?w=400", variants: [{ size: "200g", price: 75 }] },
+            { id: 62, category: "mancare", name: { ro: "Cartofi Wedges", ru: "Картофельные дольки", en: "Potato Wedges" }, desc: { ro: "Cartofi țărănești condimentați", ru: "Картофель по-деревенски", en: "Seasoned country potatoes" }, img: "https://i.pinimg.com/736x/15/0c/15/150c15181e3f7d842eee74dd85b6858c.jpg", variants: [{ size: "200g", price: 35 }] },
+            { id: 63, category: "mancare", name: { ro: "Pizza Quattro Formaggi", ru: "Пицца 4 Сыра", en: "Quattro Formaggi Pizza" }, desc: { ro: "Mozzarella, Gorgonzola, Parmesan, Cheddar", ru: "Моцарелла, Горгонзола, Пармезан, Чеддер", en: "Four cheese selection" }, img: "https://i.pinimg.com/736x/6d/15/14/6d151433ffa4dd8a6aa27287f4a3e2f3.jpg", variants: [{ size: "32 cm", price: 160 }] },
+            { id: 64, category: "mancare", name: { ro: "Salată Caesar cu Pui", ru: "Цезарь с курицей", en: "Chicken Caesar Salad" }, desc: { ro: "Salată iceberg, piept de pui, sos Caesar, crutoane", ru: "Салат Айсберг, курица, соус Цезарь", en: "Iceberg lettuce, chicken, Caesar sauce" }, img: "https://i.pinimg.com/736x/7f/db/77/7fdb77640eafb3e6e2a009d8f6dfda21.jpg", variants: [{ size: "300g", price: 105 }] },
+            { id: 66, category: "inghetata", name: { ro: "Topping Fructe", ru: "Топпинг Фрукты", en: "Fruit Topping" }, desc: { ro: "Fructe proaspete tăiate", ru: "Свежие нарезанные фрукты", en: "Fresh sliced fruits" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBq0YG5QSTfncLcxw8FmBS7f5D_Am7iCQ7yv6x5QYmChB8XrPJrBq2TXDq&s=10", variants: [{ size: "Porție", price: 10 }] },
+            { id: 65, category: "mancare", name: { ro: "Salată Caesar cu Creveți", ru: "Цезарь с креветками", en: "Shrimp Caesar Salad" }, desc: { ro: "Salată iceberg, creveți, sos Caesar", ru: "Салат Айсберг, креветки, соус Цезарь", en: "Iceberg lettuce, shrimps, Caesar sauce" }, img: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400", variants: [{ size: "300g", price: 135 }] },
+            { id: 67, category: "bauturi_fara_alcool", name: { ro: "Apă Minerală Dorna", ru: "Минеральная вода Dorna", en: "Dorna Mineral Water" }, desc: { ro: "Plată sau cu gaz", ru: "Газированная или без газа", en: "Sparkling or still" }, img: "https://deliveryman.ro/2897/apa-carbogazoasa-dorna-500-ml.jpg", variants: [{ size: "0.5L", price: 20 }] },
+            { id: 68, category: "bauturi_fara_alcool", name: { ro: "Red Bull Energy Drink", ru: "Red Bull Энергетик", en: "Red Bull Energy Drink" }, desc: { ro: "Doză energizantă", ru: "Энергетический напиток", en: "Energy drink can" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHFteCjC1mrWQMEHA866RvUa6uM7B5IQotP_Zyh-4bZLi4i1nh1bJ0D53d&s=10", variants: [{ size: "0.25L", price: 50 }] },
+            { id: 69, category: "bauturi_tari", name: { ro: "Cognac Divin Bardar 5*", ru: "Коньяк Бардар 5*", en: "Bardar Brandy 5*" }, desc: { ro: "Divin moldovenesc învechit 5 ani", ru: "Молдавский дивин 5 лет выдержки", en: "Moldavian brandy aged 5 years" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpGRIJSxxvA5Imz7mkzneR_oZGE6k9TOzeEXRSDZH5Ig&s=10", variants: [{ size: "50 ml", price: 40 }, { size: "0.5L", price: 350 }] },
+            { id: 70, category: "bauturi_tari", name: { ro: "Whiskey Jameson", ru: "Виски Jameson", en: "Jameson Whiskey" }, desc: { ro: "Irish Whiskey triplu distilat", ru: "Ирландский виски тройной дистилляции", en: "Triple distilled Irish whiskey" }, img: "https://alcomarket.md/public/products/thumbs/items-5034-3935.png", variants: [{ size: "50 ml", price: 65 }, { size: "0,7 L", price: 750 }, { size: "1 L", price: 1000 }] },
+            { id: 71, category: "bauturi_tari", name: { ro: "Gin Hendrick's", ru: "Джин Hendrick's", en: "Hendrick's Gin" }, desc: { ro: "Gin premium infuzat cu castravete și trandafir", ru: "Премиум джин с огурцом и розой", en: "Premium gin with cucumber & rose" }, img: "https://qualityliquorstore.com/cdn/shop/files/another-gin-hendricks-best-gin.jpg?crop=center&height=1200&v=1773432825&width=1200", variants: [{ size: "50 ml", price: 75 }] },
+            { id: 72, category: "bauturi_tari", name: { ro: "Vin Roșu Purcari Rară Neagră", ru: "Красное вино Purcari Rară Neagră", en: "Purcari Red Wine" }, desc: { ro: "Vin sec roșu de calitate superioară", ru: "Качественное сухое красное вино", en: "Premium dry red wine" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTreVwRnHRNoNBQ0Dry6UeA2OSoQUwjGOZGmJsSEk70R1kDJZvrC62T4WY&s=10", variants: [{ size: "150 ml", price: 50 }, { size: "0.75L", price: 240 }] },
+            { id: 73, category: "bauturi_tari", name: { ro: "Vin Alb Purcari Pinot Grigio", ru: "Белое вино Purcari Pinot Grigio", en: "Purcari White Wine" }, desc: { ro: "Vin sec alb răcoritor", ru: "Освежающее сухое белое вино", en: "Refreshing dry white wine" }, img: "https://wine.md/assets/images/products/341/chardonnay-de-purcari.png", variants: [{ size: "150 ml", price: 50 }, { size: "0.75L", price: 240 }] },
+            { id: 74, category: "mancare", name: { ro: "Lava Cake cu Înghețată", ru: "Лава Кейк с мороженым", en: "Lava Cake with Ice Cream" }, desc: { ro: "Prăjitură de ciocolată cu inimă caldă", ru: "Шоколадный десерт с жидким центром", en: "Warm chocolate cake with ice cream" }, img: "https://static.vecteezy.com/system/resources/previews/055/025/177/large_2x/chocolate-lava-cake-with-vanilla-ice-cream-photo.jpg", variants: [{ size: " Porție", price: 70 }] },
+            { id: 75, category: "mancare", name: { ro: "Cheesecake Clasic", ru: "Чизкейк Классический", en: "Classic Cheesecake" }, desc: { ro: "Desert fin cu cremă de brânză și sos de fructe", ru: "Нежный сырный десерт", en: "Smooth cream cheese dessert" }, img: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400", variants: [{ size: "Porție", price: 65 }] },
+            { id: 76, category: "mancare", name: { ro: "Sos Usturoi (Mujdei)", ru: "Чесночный соус", en: "Garlic Sauce" }, desc: { ro: "Sos cremos de usturoi", ru: "Чесночный соус", en: "Creamy garlic sauce" }, img: "https://i.pinimg.com/736x/7a/51/b7/7a51b79d7ec6a51abed6d2001e67c779.jpg", variants: [{ size: "50g", price: 15 }] },
+            { id: 77, category: "mancare", name: { ro: "Sos BBQ", ru: "Соус BBQ", en: "BBQ Sauce" }, desc: { ro: "Sos dulce-afumat", ru: "Сладковато-дымный соус", en: "Sweet-smoky BBQ sauce" }, img: "https://i.pinimg.com/736x/c7/47/73/c747734a993cd497c6120ca894c34897.jpg", variants: [{ size: "50g", price: 15 }] },
+            { id: 78, category: "mancare", name: { ro: "Sos Sweet Chilli", ru: "Соус Sweet Chilli", en: "Sweet Chilli Sauce" }, desc: { ro: "Sos dulce-picant", ru: "Сладко-острый соус", en: "Sweet and spicy sauce" }, img: "https://i.pinimg.com/564x/c3/80/fd/c380fd3ec87de7742e57b304878578f6.jpg", variants: [{ size: "50g", price: 15 }] },
+            { id: 79, category: "bauturi_calde", name: { ro: "Americano", ru: "Американо", en: "Americano" }, desc: { ro: "Cafea clasică, intensă", ru: "Классический, насыщенный кофе", en: "Classic, intense coffee" }, img: "https://i.pinimg.com/736x/a7/8e/85/a78e854c60774276c1ecac1f63dbb012.jpg", variants: [{ size: "200 ml", price: 25 }] },
+            { id: 80, category: "bauturi_calde", name: { ro: "Ice Latte", ru: "Айс Латте", en: "Ice Latte" }, desc: { ro: "Espresso, lapte rece și gheață", ru: "Эспрессо, холодное молоко и лед", en: "Espresso, cold milk and ice" }, img: "https://i.pinimg.com/originals/d3/e8/52/d3e852cf8636c85556172bd32250ce11.jpg", variants: [{ size: "350 ml", price: 55 }] },
+            { id: 81, category: "bauturi_calde", name: { ro: "Latte", ru: "Латте", en: "Caffè Latte" }, desc: { ro: "Cafea fină cu spumă de lapte", ru: "Нежный кофе с молочной пеной", en: "Smooth coffee with milk foam" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQh3w3acIhqLdRUzP4y3uKHasAWdpS7qnHZlUxrrwZl0dBSVVEC9f4Bsyw&s=10", variants: [{ size: "300 ml", price: 30 }] },
+            { id: 82, category: "bauturi_fara_alcool", name: { ro: "Limonadă de Portocale", ru: "Лимонад Апельсиновый", en: "Orange Lemonade" }, desc: { ro: "Limonadă cu portocale proaspete", ru: "Лимонад со свежими апельсинами", en: "Lemonade with fresh oranges" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQOcwBMXint3v2FT5KSgvslRaVrRpFOXja8C4Mbi3f5YscD-wzTQNezZkwv&s=10", variants: [{ size: "350 ml", price: 55 }] },
+            { id: 83, category: "bauturi_fara_alcool", name: { ro: "Limonadă Clasică", ru: "Лимонад Классический", en: "Classic Lemonade" }, desc: { ro: "Limonadă cu lămâie și mentă", ru: "Лимонад с лимоном и мятой", en: "Lemonade with lemon and mint" }, img: "https://i.pinimg.com/736x/88/24/1b/88241b7ac527197077c2740c57305f1f.jpg", variants: [{ size: "350 ml", price: 55 }] },
+            { id: 84, category: "bauturi_fara_alcool", name: { ro: "Limonadă cu Fructe de Pădure", ru: "Лимонад Ягодный", en: "Berry Lemonade" }, desc: { ro: "Limonadă cu mix de fructe", ru: "Лимонад с ягодным миксом", en: "Lemonade with berry mix" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREWbA50BYqyDrAqy4fE3pWrHaPc8U800UXCEdKkfss1YjbqGAgLqfPngc&s=10", variants: [{ size: "350 ml", price: 55 }] },
+            { id: 85, category: "bauturi_fara_alcool", name: { ro: "Coca-Cola", ru: "Coca-Cola", en: "Coca-Cola" }, desc: { ro: "Băutură răcoritoare", ru: "Освежающий напиток", en: "Soft drink" }, img: "https://i.pinimg.com/280x280_RS/c0/46/d0/c046d0dfa2e9830992151920364399ab.jpg", variants: [{ size: "0.33 L", price: 17 }, { size: "0.5 L", price: 20 }, { size: "1.25 L", price: 35 }] },
+            { id: 86, category: "bauturi_fara_alcool", name: { ro: "Coca-Cola Zero", ru: "Coca-Cola Zero", en: "Coca-Cola Zero" }, desc: { ro: "Fără zahăr", ru: "Без сахара", en: "Zero sugar" }, img: "https://i.pinimg.com/originals/5a/fd/d6/5afdd6072540b4163ec19d95c8f65f21.jpg?nii=t", variants: [{ size: "0.33 L", price: 17 }, { size: "0.5 L", price: 20 }] },
+            { id: 87, category: "bauturi_fara_alcool", name: { ro: "Fanta / Sprite", ru: "Fanta / Sprite", en: "Fanta / Sprite" }, desc: { ro: "Băutură răcoritoare", ru: "Освежающий напиток", en: "Refreshing drink" }, img: "https://i.pinimg.com/736x/3f/1e/50/3f1e504a2af9a4d98edaa4984afa16c5.jpg", variants: [{ size: "0.33 L", price: 17 }, { size: "0.5 L", price: 20 }, { size: "1.25 L", price: 35 }] },
+            { id: 88, category: "bauturi_fara_alcool", name: { ro: "Apă Dorna", ru: "Вода Dorna", en: "Dorna Water" }, desc: { ro: "Apă minerală sau plată", ru: "Минеральная или негазированная вода", en: "Mineral or still water" }, img: "https://deliveryman.ro/2897/apa-carbogazoasa-dorna-500-ml.jpg", variants: [{ size: "0.33 L", price: 20 }, { size: "0.5 L", price: 25 }] },
+            { id: 89, category: "bauturi_fara_alcool", name: { ro: "Suc Naturalis", ru: "Сок Naturalis", en: "Naturalis Juice" }, desc: { ro: "Suc natural diverse arome", ru: "Натуральный сок, разные вкусы", en: "Natural juice, various flavors" }, img: "https://www.megaalina.md/upfiles/goods-items/424261001759231827.webp", variants: [{ size: "0.2 L", price: 12 }] },
+            { id: 90, category: "bauturi_fara_alcool", name: { ro: "Suc Vita", ru: "Сок Vita", en: "Vita Juice" }, desc: { ro: "Suc natural", ru: "Натуральный сок", en: "Natural juice" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUxna9jjuRGolKuZfiuzpxwQn9XpjVxNEE5TK0dCcS4d6aDRx5Sj3fJnQ&s=10", variants: [{ size: "0.25 L", price: 20 }] },
+            { id: 91, category: "bauturi_fara_alcool", name: { ro: "Fuse Tea", ru: "Fuse Tea", en: "Fuse Tea" }, desc: { ro: "Ceai rece", ru: "Холодный чай", en: "Ice Tea" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRt3j1zhNpoIw3ksVhFSJKLM1-P7RX5MkbjZtzD5Rkfw&s=10", variants: [{ size: "0.33 L", price: 20 }] },
+            { id: 92, category: "bauturi_fara_alcool", name: { ro: "Schweppes", ru: "Schweppes", en: "Schweppes" }, desc: { ro: "Apă tonică", ru: "Тоник", en: "Tonic water" }, img: "https://i.pinimg.com/236x/69/7a/6e/697a6efe8b174fa0111b4bcad0283c4a.jpg", variants: [{ size: "0.33 L", price: 20 }] },
+            { id: 93, category: "bauturi_fara_alcool", name: { ro: "Burn / Monster", ru: "Burn / Monster", en: "Energy Drink" }, desc: { ro: "Băutură energizantă", ru: "Энергетический напиток", en: "Energy drink" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRv-C21gNsGl6ZnQxKuYir0RaWt5KLZTnj0HuCjYu7A-aF9MPCUBhDUXvTg&s=10", variants: [{ size: "Burn 0.35 L", price: 30 }, { size: "Monster 0.5 L", price: 40 }] },
+            { id: 94, category: "vinuri", name: { ro: "Vin Spumant Mi Piace", ru: "Игристое Вино Mi Piace", en: "Mi Piace Sparkling" }, desc: { ro: "Vin spumant", ru: "Игристое вино", en: "Sparkling wine" }, img: "https://www.megaalina.md/upfiles/goods-items/811863001776772837.webp", variants: [{ size: "Sticlă", price: 150 }] },
+            { id: 95, category: "vinuri", name: { ro: "Vin J.P. Chenet", ru: "Вино J.P. Chenet", en: "J.P. Chenet" }, desc: { ro: "Vin de calitate", ru: "Качественное вино", en: "Quality wine" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQadoVNLvjfa5nV-mLJREoChkUSqnHtOn6NMJUFMmZ5PJscZWbgMNN_bbGv&s=10", variants: [{ size: "Sticlă", price: 180 }] },
+            { id: 96, category: "vinuri", name: { ro: "Divin Kvint 5 Ani", ru: "Коньяк Квинт 5 лет", en: "Kvint Cognac 5 Y.O." }, desc: { ro: "Coniac 5 stele", ru: "Коньяк 5 звезд", en: "Cognac 5 stars" }, img: "https://67wine.com/cdn/shop/files/xekvitqwrytwen3pliy4.jpg?v=1772555902", variants: [{ size: "50 ml", price: 25 }, { size: "0.5 L", price: 200 }] },
+            { id: 97, category: "vinuri", name: { ro: "Divin Kvint 7 Ani", ru: "Коньяк Квинт 7 лет", en: "Kvint Cognac 7 Y.O." }, desc: { ro: "Coniac 7 stele", ru: "Коньяк 7 звезд", en: "Cognac 7 stars" }, img: "https://wine.md/assets/images/products/3141/kvint7anidecanter1.png", variants: [{ size: "50 ml", price: 30 }, { size: "0.5 L", price: 280 }] },
+            // ================= ÎNGHEȚATĂ (GUSTURI) =================
+            { id: 98, category: "inghetata", name: { ro: "Înghețată Bubble Gum", ru: "Мороженое Bubble Gum", en: "Bubble Gum Ice Cream" }, desc: { ro: "Aromă delicioasă Bubble Gum", ru: "Вкус Bubble Gum", en: "Bubble Gum flavor" }, img: "https://i.pinimg.com/236x/c9/30/4f/c9304fdfaf4f9600d3078b9c2563d713.jpg", variants: [{ size: "1 Cupă", price: 25 }, { size: "2 Cupe", price: 40 }, { size: "3 Cupe", price: 55 }] },
+            { id: 99, category: "inghetata", name: { ro: "Înghețată de Căpșuni", ru: "Мороженое Клубничное", en: "Strawberry Ice Cream" }, desc: { ro: "Înghețată de căpșuni", ru: "Клубничное мороженое", en: "Strawberry ice cream" }, img: "https://i.pinimg.com/736x/aa/2f/b9/aa2fb9c2241cc4c34a6c66593474e43a.jpg", variants: [{ size: "1 Cupă", price: 25 }, { size: "2 Cupe", price: 40 }, { size: "3 Cupe", price: 55 }] },
+            { id: 100, category: "inghetata", name: { ro: "Înghețată de Fistic", ru: "Мороженое Фисташка", en: "Pistachio Ice Cream" }, desc: { ro: "Înghețată de fistic", ru: "Фисташковое мороженое", en: "Pistachio ice cream" }, img: "https://i.pinimg.com/originals/02/e2/51/02e251383cc070d8cee16c8c86ce1c06.webp?nii=t", variants: [{ size: "1 Cupă", price: 25 }, { size: "2 Cupe", price: 40 }, { size: "3 Cupe", price: 55 }] },
+            { id: 101, category: "inghetata", name: { ro: "Înghețată de Mango", ru: "Мороженое Манго", en: "Mango Ice Cream" }, desc: { ro: "Înghețată fină de mango", ru: "Манговое мороженое", en: "Mango ice cream" }, img: "https://i.pinimg.com/736x/81/0a/99/810a9928142f0fb91eb6c18f22ef40f3.jpg", variants: [{ size: "1 Cupă", price: 25 }, { size: "2 Cupe", price: 40 }, { size: "3 Cupe", price: 55 }] },
+            { id: 102, category: "inghetata", name: { ro: "Înghețată Plombir", ru: "Мороженое Пломбир", en: "Plombir Ice Cream" }, desc: { ro: "Înghețată clasică Plombir", ru: "Классический пломбир", en: "Classic Plombir ice cream" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNVGzN74b7FTLPrcFvWpkM32hO7Axl1tkTDDnF1RA0rGLRpAzpqc6XRsI&s=10", variants: [{ size: "1 Cupă", price: 25 }, { size: "2 Cupe", price: 40 }, { size: "3 Cupe", price: 55 }] },
+            { id: 103, category: "inghetata", name: { ro: "Înghețată de Ciocolată", ru: "Мороженое Шоколад", en: "Chocolate Ice Cream" }, desc: { ro: "Înghețată de ciocolată", ru: "Шоколадное мороженое", en: "Chocolate ice cream" }, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLESJkN3jvCAVz5L4NZtYvxnsetS7u6fxo4DjZySGVZOaTUpNlxGsMhpDk&s=10", variants: [{ size: "1 Cupă", price: 25 }, { size: "2 Cupe", price: 40 }, { size: "3 Cupe", price: 55 }] },
+            { id: 104, category: "inghetata", name: { ro: "Înghețată Fructe de Pădure", ru: "Мороженое Ягодное", en: "Berry Ice Cream" }, desc: { ro: "Mix de fructe de pădure", ru: "Ягодное мороженое", en: "Berry mix ice cream" }, img: "https://patiline.ro/blog/wp-content/uploads/2015/09/foto2.jpg", variants: [{ size: "1 Cupă", price: 25 }, { size: "2 Cupe", price: 40 }, { size: "3 Cupe", price: 55 }] },
+
+            // ================= TOPPINGURI ÎNGHEȚATĂ =================
+            { id: 105, category: "inghetata", name: { ro: "Topping Caramel", ru: "Топпинг Карамель", en: "Caramel Topping" }, desc: { ro: "Sos de caramel dulce", ru: "Сладкий карамельный соус", en: "Sweet caramel sauce" }, img: "https://butternutbakeryblog.com/wp-content/uploads/2020/03/Pouring-Caramel.jpg", variants: [{ size: "Porție", price: 5 }] },
+            { id: 106, category: "inghetata", name: { ro: "Topping Cacao", ru: "Топпинг Какао", en: "Cocoa Topping" }, desc: { ro: "Pudră sau sos de cacao", ru: "Какао", en: "Cocoa" }, img: "https://i.pinimg.com/736x/22/3f/4d/223f4d2530c631b075f4985c68680da7.jpg", variants: [{ size: "Porție", price: 5 }] }
+
+
+        ];
+
+        const translations = {
+            ro: { all: "Toate", cartTitle: "Coșul tău", total: "Total:", checkout: "Finalizează Comanda", emptyCart: "Coșul este gol." },
+            ru: { all: "Все", cartTitle: "Ваша корзина", total: "Итого:", checkout: "Оформить заказ", emptyCart: "Корзина пуста." },
+            en: { all: "All", cartTitle: "Your Cart", total: "Total:", checkout: "Proceed to Checkout", emptyCart: "Cart is empty." }
+        };
+
+        let currentLang = 'ro';
+        let currentCategory = 'all';
+        let cart = [];
+
+        function initApp() {
+            renderCategories();
+            renderProducts();
+            updateCartUI();
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('cartTitleText').innerText = translations[lang].cartTitle;
+            document.getElementById('totalLabelText').innerText = translations[lang].total;
+            document.getElementById('checkoutBtnText').innerText = translations[lang].checkout;
+            renderCategories();
+            renderProducts();
+            updateCartUI();
+        }
+
+        function renderCategories() {
+            const categoriesBar = document.getElementById('categoriesBar');
+            const categories = [
+                { id: 'all', name: translations[currentLang].all },
+                { id: 'bere_draft', name: "Bere Draft" },
+                { id: 'bere_stycla', name: "Bere Sticlă" },
+                { id: 'cocktail', name: "Cocktailuri" },
+                { id: 'bauturi_tari', name: "Băuturi Tari" }, // Categorie nouă
+                { id: 'shoturi', name: "Shot-uri" },           // Categorie nouă
+                { id: 'bauturi_fara_alcool', name: "Fără Alcool / Limonade" },
+                { id: 'bauturi_calde', name: "Băuturi Calde" }, // Categorie nouă
+                { id: 'vinuri', name: "Vinuri, Spumante & Divin" },
+                { id: 'inghetata', name: "Înghețată" },
+                { id: 'mancare', name: "Mâncare Caldă" },
+                { id: 'snackuri', name: "Snack-uri & Platouri" }
+            ];
+
+            categoriesBar.innerHTML = categories.map(cat => `
+                <button class="cat-btn ${currentCategory === cat.id ? 'active' : ''}"
+                        onclick="filterCategory('${cat.id}')">${cat.name}</button>
+            `).join('');
+        }
+
+        function filterCategory(catId) {
+            currentCategory = catId;
+            renderCategories();
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            const filtered = currentCategory === 'all'
+                ? productsData
+                : productsData.filter(p => p.category === currentCategory);
+
+            grid.innerHTML = filtered.map(p => {
+                const selectedPrice = p.variants[0].price;
+                return `
+                    <div class="product-card">
+                        <img src="${p.img}" class="product-img" alt="${p.name[currentLang]}">
+                        <div class="product-info">
+                            <h3 class="product-title">${p.name[currentLang]}</h3>
+                            <p class="product-desc">${p.desc[currentLang]}</p>
+
+                            <select class="variant-select" id="select-${p.id}" onchange="updateCardPrice(${p.id})">
+                                ${p.variants.map((v, index) => `<option value="${index}">${v.size} - ${v.price} MDL</option>`).join('')}
+                            </select>
+
+                            <div class="card-bottom">
+                                <span class="price" id="price-${p.id}">${selectedPrice} MDL</span>
+                                <button class="add-btn" onclick="addToCart(${p.id})">+ Adaugă</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCardPrice(productId) {
+            const product = productsData.find(p => p.id === productId);
+            const selectedIndex = document.getElementById(`select-${productId}`).value;
+            const priceSpan = document.getElementById(`price-${productId}`);
+            priceSpan.innerText = `${product.variants[selectedIndex].price} MDL`;
+        }
+
+        function addToCart(productId) {
+            const product = productsData.find(p => p.id === productId);
+            const selectedIndex = document.getElementById(`select-${productId}`).value;
+            const variant = product.variants[selectedIndex];
+
+            const existingIndex = cart.findIndex(item => item.id === productId && item.variantSize === variant.size);
+
+            if (existingIndex > -1) {
+                cart[existingIndex].qty += 1;
+            } else {
+                cart.push({
+                    id: product.id,
+                    name: product.name[currentLang],
+                    variantSize: variant.size,
+                    price: variant.price,
+                    qty: 1
+                });
+            }
+            updateCartUI();
+            toggleCart(true);
+        }
+
+        function updateQty(index, change) {
+            cart[index].qty += change;
+            if (cart[index].qty <= 0) cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cartItems');
+            const cartCount = document.getElementById('cartCount');
+            const cartTotalHeader = document.getElementById('cartTotalHeader');
+            const cartTotalDrawer = document.getElementById('cartTotalDrawer');
+
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = `<p style="text-align:center; color:#888;">${translations[currentLang].emptyCart}</p>`;
+                cartCount.innerText = '0';
+                cartTotalHeader.innerText = '0 MDL';
+                cartTotalDrawer.innerText = '0 MDL';
+                return;
+            }
+
+            let total = 0;
+            let totalItems = 0;
+
+            cartItemsContainer.innerHTML = cart.map((item, index) => {
+                const itemTotal = item.price * item.qty;
+                total += itemTotal;
+                totalItems += item.qty;
+                return `
+                    <div class="cart-item">
+                        <div class="item-details">
+                            <h4>${item.name}</h4>
+                            <p>${item.variantSize} | ${item.price} MDL</p>
+                            <div class="qty-controls">
+                                <button class="qty-btn" onclick="updateQty(${index}, -1)">-</button>
+                                <span>${item.qty}</span>
+                                <button class="qty-btn" onclick="updateQty(${index}, 1)">+</button>
+                            </div>
+                        </div>
+                        <div style="font-weight:bold;">${itemTotal} MDL</div>
+                    </div>
+                `;
+            }).join('');
+
+            cartCount.innerText = totalItems;
+            cartTotalHeader.innerText = `${total} MDL`;
+            cartTotalDrawer.innerText = `${total} MDL`;
+        }
+
+        function toggleCart(open) {
+            document.getElementById('cartOverlay').classList.toggle('open', open);
+            document.getElementById('cartDrawer').classList.toggle('open', open);
+        }
+
+        function goToCheckout() {
+            if (cart.length === 0) return alert("Coșul este gol!");
+            localStorage.setItem('hog_pub_cart', JSON.stringify(cart));
+            window.location.href = 'checkout.html';
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
