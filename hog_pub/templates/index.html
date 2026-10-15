@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <!-- Setează setul de caractere pentru a suporta diacritice (ș, ț, ă, î, â) -->
     <meta charset="UTF-8">
+    <!-- Asigură scalarea corectă a paginii pe dispozitive mobile (Responsive Design) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HOG BEER PUB - Meniu Interactiv</title>
+    
     <style>
+        /* :root definește variabile CSS globale (Custom Properties). 
+           Sunt folosite pentru a menține un design consistent (DRY - Don't Repeat Yourself) 
+           și pentru a facilita implementarea unui viitor 'Light/Dark Theme' */
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
@@ -15,80 +21,106 @@
             --border-color: #333;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        /* Reset global: Elimină marginile și padding-ul default al browserului.
+           box-sizing: border-box asigură că padding-ul și border-ul sunt incluse în lățimea totală a elementului */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+
+        /* Stilizarea principală a corpului paginii */
         body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    padding-bottom: 80px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding-bottom: 80px; /* Spațiu jos pentru a nu fi acoperit conținutul de telefonul plutitor */
 
-    /* SETĂRILE PENTRU IMAGINEA DE FUNDAL */
-    background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('/static/img/fundal_hog.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed; /* Ține imaginea nemișcată când dai scroll prin produse */
-}
+            /* SETĂRILE PENTRU IMAGINEA DE FUNDAL */
+            /* linear-gradient aplică o peliculă întunecată (85% opacitate) peste imagine pentru ca textul să fie lizibil */
+            background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('/static/img/fundal_hog.jpg');
+            background-size: cover; /* Imaginea acoperă tot ecranul fără a se deforma */
+            background-position: center; /* Centrează imaginea */
+            background-attachment: fixed; /* Efect de paralaxă: Ține imaginea nemișcată când dai scroll prin produse */
+        }
 
-        /* HEADER */
+        /* HEADER - Bara de navigare sus */
         header {
-            position: sticky; top: 0; z-index: 100;
+            position: sticky; top: 0; z-index: 100; /* Menține header-ul lipit de sus la scroll. z-index îl ține deasupra altor elemente */
             background-color: rgba(18, 18, 18, 0.95);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px); /* Efect modern de sticlă mată (Glassmorphism) pentru fundalul header-ului */
             border-bottom: 1px solid var(--border-color);
             padding: 15px 20px;
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; /* Flexbox pentru alinierea elementelor */
+            justify-content: space-between; /* Împinge logo-ul la stânga și acțiunile la dreapta */
+            align-items: center; /* Centrează vertical elementele din header */
         }
+        
         .logo { font-size: 1.4rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
-        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .header-actions { display: flex; align-items: center; gap: 15px; } /* gap creează spațiu între selectorul de limbă și coș */
 
+        /* SELECTORUL DE LIMBĂ */
         .lang-select {
             background: #2a2a2a; color: #fff; border: 1px solid var(--border-color);
             padding: 6px 10px; border-radius: 5px; cursor: pointer; outline: none;
         }
 
+        /* BUTONUL PENTRU COȘ (CART) */
         .cart-btn {
             background: var(--accent); color: #fff; border: none;
             padding: 8px 16px; border-radius: 20px; font-weight: bold;
             cursor: pointer; display: flex; align-items: center; gap: 8px;
-            transition: background 0.2s;
+            transition: background 0.2s; /* Animație lină la schimbarea culorii pe hover */
         }
         .cart-btn:hover { background: var(--accent-hover); }
 
-        /* BARĂ CATEGORII */
+        /* BARĂ CATEGORII - meniu glisant orizontal */
         .categories-bar {
-            display: flex; gap: 10px; overflow-x: auto; padding: 15px 20px;
+            display: flex; gap: 10px; overflow-x: auto; padding: 15px 20px; /* overflow-x: auto permite scroll orizontal când sunt multe butoane */
             background: #181818; border-bottom: 1px solid var(--border-color);
-            scrollbar-width: none;
+            scrollbar-width: none; /* Ascunde scrollbar-ul pentru un aspect curat pe Firefox */
         }
-        .categories-bar::-webkit-scrollbar { display: none; }
+        .categories-bar::-webkit-scrollbar { display: none; } /* Ascunde scrollbar-ul pe Chrome/Safari */
+        
         .cat-btn {
             background: #2a2a2a; color: var(--text-muted); border: none;
-            padding: 8px 18px; border-radius: 20px; white-space: nowrap;
+            padding: 8px 18px; border-radius: 20px; white-space: nowrap; /* Împiedică textul lung să se rupă pe mai multe rânduri */
             cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
         }
-        .cat-btn.active, .cat-btn:hover { background: var(--accent); color: #fff; }
+        .cat-btn.active, .cat-btn:hover { background: var(--accent); color: #fff; } /* Stil pentru categoria selectată activă */
 
-        /* GRILĂ PRODUSE */
+        /* GRILĂ PRODUSE - Layout-ul principal */
         .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        
         .products-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;
+            display: grid; 
+            /* CSS Grid Responsiv: Creează automat atâtea coloane câte încap. 
+               minmax(260px, 1fr) înseamnă că un card va avea minim 260px lățime și maxim spațiul disponibil (1 fracție) */
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+            gap: 20px; /* Spațiu uniform între cardurile de produse */
         }
 
+        /* CARDUL DE PRODUS INDIVIDUAL */
         .product-card {
-            background: var(--card-bg); border-radius: 12px; overflow: hidden;
-            border: 1px solid var(--border-color); display: flex; flex-direction: column;
-            justify-content: space-between; transition: transform 0.2s;
+            background: var(--card-bg); border-radius: 12px; overflow: hidden; /* overflow: hidden taie colțurile imaginii pentru a respecta border-radius */
+            border: 1px solid var(--border-color); display: flex; flex-direction: column; /* Flex pe coloană pentru a alinia conținutul pe verticală */
+            justify-content: space-between; transition: transform 0.2s; /* Pregătește animația de ridicare a cardului */
         }
-        .product-card:hover { transform: translateY(-4px); }
-        .product-img { width: 100%; height: 160px; object-fit: cover; background: #2a2a2a; }
-        .product-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .product-card:hover { transform: translateY(-4px); } /* Ridică cardul cu 4px la hover, efect de interactivitate */
+        
+        .product-img { width: 100%; height: 160px; object-fit: cover; background: #2a2a2a; } /* object-fit: cover forțează imaginea să umple zona fără a distorsiona proporțiile */
+        
+        .product-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; } /* flex-grow: 1 forțează acest container să ocupe tot spațiul rămas, împingând prețul jos */
         .product-title { font-size: 1.05rem; margin-bottom: 6px; }
-        .product-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; flex-grow: 1; }
+        .product-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; flex-grow: 1; } /* flex-grow aici ajută la alinierea prețurilor la aceeași înălțime pe toate cardurile */
 
+        /* SELECTOR PENTRU VARIANTE PRODUS (ex: 300ml, 500ml) */
         .variant-select {
             width: 100%; padding: 8px; background: #2a2a2a; color: #fff;
             border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 12px;
         }
 
+        /* ZONA DE JOS A CARDULUI (PREȚ + BUTON ADAUGĂ) */
         .card-bottom { display: flex; justify-content: space-between; align-items: center; }
         .price { font-size: 1.15rem; font-weight: bold; color: var(--accent); }
         .add-btn {
@@ -97,20 +129,24 @@
         }
         .add-btn:hover { background: var(--accent-hover); }
 
-        /* COȘ LATERAL */
+        /* COȘ LATERAL - FUNDALUL ÎNTUNECAT (Overlay) */
         .cart-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); opacity: 0; pointer-events: none;
-            transition: opacity 0.3s; z-index: 200;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; /* Acoperă tot ecranul */
+            background: rgba(0,0,0,0.7); opacity: 0; pointer-events: none; /* Ascuns inițial și blochează click-urile accidental */
+            transition: opacity 0.3s; z-index: 200; /* Stă peste header */
         }
-        .cart-overlay.open { opacity: 1; pointer-events: all; }
+        .cart-overlay.open { opacity: 1; pointer-events: all; } /* Devine vizibil și interactiv când e adăugată clasa .open prin JS */
 
+        /* COȘ LATERAL - SERTARUL (Drawer) */
         .cart-drawer {
-            position: fixed; top: 0; right: -400px; width: 100%; max-width: 380px; height: 100%;
+            position: fixed; top: 0; right: -400px; /* Ascuns inițial în afara ecranului la dreapta */
+            width: 100%; max-width: 380px; height: 100%; /* Ocupă tot ecranul pe mobil, dar maxim 380px pe desktop */
             background: var(--card-bg); border-left: 1px solid var(--border-color);
-            z-index: 201; transition: right 0.3s ease-in-out; display: flex; flex-direction: column;
+            z-index: 201; /* Stă deasupra overlay-ului */
+            transition: right 0.3s ease-in-out; /* Animație de glisare din dreapta */
+            display: flex; flex-direction: column; /* Structură flex pentru header, body (scrollable), footer */
         }
-        .cart-overlay.open + .cart-drawer, .cart-drawer.open { right: 0; }
+        .cart-overlay.open + .cart-drawer, .cart-drawer.open { right: 0; } /* Glisează sertarul în ecran schimbând right de la -400px la 0 */
 
         .cart-header {
             padding: 20px; border-bottom: 1px solid var(--border-color);
@@ -118,7 +154,8 @@
         }
         .close-cart { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
 
-        .cart-body { padding: 20px; flex-grow: 1; overflow-y: auto; }
+        /* LISTA PRODUSELOR DIN COȘ */
+        .cart-body { padding: 20px; flex-grow: 1; overflow-y: auto; } /* overflow-y: auto permite scroll doar în interiorul produselor din coș */
         .cart-item {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;
@@ -131,6 +168,7 @@
             border-radius: 4px; cursor: pointer; font-weight: bold;
         }
 
+        /* ZONA DE FINALIZARE COMANDĂ DIN COȘ */
         .cart-footer { padding: 20px; border-top: 1px solid var(--border-color); background: #181818; }
         .cart-total { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; }
         .checkout-btn {
@@ -138,44 +176,53 @@
             padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;
         }
 
+        /* BUTONUL FLOTANT PENTRU APEL TELEFONIC */
         .floating-phone {
             position: fixed; bottom: 20px; right: 20px; background: #27ae60; color: #fff;
-            width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center;
-            justify-content: center; text-decoration: none; font-size: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 150;
+            width: 55px; height: 55px; border-radius: 50%; /* border-radius: 50% pe un pătrat face un cerc perfect */
+            display: flex; align-items: center; justify-content: center; 
+            text-decoration: none; font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 150; /* box-shadow dă senzația de plutire (adâncime) */
         }
     </style>
 </head>
-<body>
-<a href="tel:+373060567666" class="floating-phone" title="Sună la Pub">📞</a>
+
 <body>
 
     <header>
         <div class="logo">🐗 HOG BEER PUB</div>
         <div class="header-actions">
+            <!-- onchange apelează funcția JS changeLanguage atunci când utilizatorul schimbă valoarea din dropdown -->
             <select class="lang-select" id="langSelect" onchange="changeLanguage(this.value)">
                 <option value="ro">RO 🇲🇩</option>
                 <option value="ru">RU 🇷🇺</option>
                 <option value="en">EN 🇬🇧</option>
             </select>
+            <!-- Buton care deschide coșul de cumpărături trecând parametrul 'true' în funcția toggleCart -->
             <button class="cart-btn" onclick="toggleCart(true)">
                 🛒 <span id="cartCount">0</span> | <span id="cartTotalHeader">0 MDL</span>
             </button>
         </div>
     </header>
 
+    <!-- Container gol (injectat dinamic din JavaScript) pentru a randarea categoriilor (Bere, Mâncare, etc) -->
     <div class="categories-bar" id="categoriesBar"></div>
 
+    <!-- Containerul principal unde JavaScript va popula grila cu cardurile de produse -->
     <div class="container">
         <div class="products-grid" id="productsGrid"></div>
     </div>
 
+    <!-- Overlay-ul negru transparent care apare în spatele coșului lateral. La click pe el, închide coșul (false) -->
     <div class="cart-overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+    
+    <!-- Structura coșului lateral glisant -->
     <div class="cart-drawer" id="cartDrawer">
         <div class="cart-header">
             <h3 id="cartTitleText">Coșul tău</h3>
             <button class="close-cart" onclick="toggleCart(false)">&times;</button>
         </div>
+        <!-- Aici vor fi injectate dinamic din JS elementele adăugate în coș -->
         <div class="cart-body" id="cartItems"></div>
         <div class="cart-footer">
             <div class="cart-total">
@@ -186,10 +233,38 @@
         </div>
     </div>
 
+    <!-- Buton tip <a> care utilizează protocolul tel: pentru a deschide aplicația de telefon a utilizatorului -->
     <a href="tel:+37300000000" class="floating-phone" title="Sună la Pub">📞</a>
 
     <script>
+        /* 
+           Array-ul de obiecte care conține baza de date a produselor (Mock Data).
+           Se folosește un array (lista) de obiecte (cheie-valoare) pentru ca 
+           informația să fie ușor de iterat (map/forEach) și randat în HTML.
+        */
         const productsData = [
+            {
+                id: 1, // Identificator unic necesar pentru adăugarea în coș / gestiunea cantității
+                categoryId: 'bere', // Folosit pentru filtrarea produselor la apăsarea butoanelor de categorie
+                title: { ro: 'Bere Brună Hog', en: 'Hog Dark Beer', ru: 'Темное пиво Hog' }, // Obiect pentru localizare/traducere (i18n)
+                description: { ro: 'Bere artizanală brună, nepasteurizată', en: 'Artisanal dark beer', ru: 'Крафтовое темное пиво' },
+                img: '/static/img/bere_bruna.jpg',
+                price: 45 // Prețul de bază exprimat în MDL
+            },
+            {
+                id: 2,
+                categoryId: 'snack',
+                title: { ro: 'Aripioare Picante', en: 'Spicy Wings', ru: 'Острые крылышки' },
+                description: { ro: 'Servite cu sos sweet chilli', en: 'Served with sweet chilli sauce', ru: 'Подаются со сладким соусом чили' },
+                img: '/static/img/aripioare.jpg',
+                price: 85
+            }
+        ];
+        
+        // Logica de randare și funcțiile pentru interactivitate vor continua mai jos (filtrare, adăugare în coș, update DOM).
+    </script>
+</body>
+</html>
             // --- BERE DRAFT ---
             { id: 1, category: "bere_draft", name: { ro: "Stella Artois Draft", ru: "Stella Artois (Разливное)", en: "Stella Artois Draft" }, desc: { ro: "Bere blondă draft", ru: "Светлое разливное пиво", en: "Draft blonde beer" }, img: "https://i.pinimg.com/736x/19/53/41/1953418f6e4cc6c64a792944e96feacc.jpg", variants: [{ size: "0.33L", price: 30 }, { size: "0.5L", price: 40 }] },
             { id: 2, category: "bere_draft", name: { ro: "Krombacher", ru: "Krombacher", en: "Krombacher" }, desc: { ro: "Bere germană premium draft", ru: "Премиальное немецкое пиво", en: "Premium German draft beer" }, img: "https://www.imbissgrill.ro/img-oferte/20150418/0846069613_0_huge.jpg", variants: [{ size: "0.33L", price: 31 }, { size: "0.5L", price: 42 }] },
@@ -328,173 +403,349 @@
             en: { all: "All", cartTitle: "Your Cart", total: "Total:", checkout: "Proceed to Checkout", emptyCart: "Cart is empty." }
         };
 
-        let currentLang = 'ro';
-        let currentCategory = 'all';
-        let cart = [];
+       
+<script>
+    // Limba selectată în aplicație: română.
+    let currentLang = 'ro';
 
-        function initApp() {
-            renderCategories();
-            renderProducts();
-            updateCartUI();
-        }
+    // Categoria selectată. 'all' înseamnă toate produsele.
+    let currentCategory = 'all';
 
-        function changeLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('cartTitleText').innerText = translations[lang].cartTitle;
-            document.getElementById('totalLabelText').innerText = translations[lang].total;
-            document.getElementById('checkoutBtnText').innerText = translations[lang].checkout;
-            renderCategories();
-            renderProducts();
-            updateCartUI();
-        }
+    // Array-ul în care păstrăm produsele adăugate în coș.
+    let cart = [];
 
-        function renderCategories() {
-            const categoriesBar = document.getElementById('categoriesBar');
-            const categories = [
-                { id: 'all', name: translations[currentLang].all },
-                { id: 'bere_draft', name: "Bere Draft" },
-                { id: 'bere_stycla', name: "Bere Sticlă" },
-                { id: 'cocktail', name: "Cocktailuri" },
-                { id: 'bauturi_tari', name: "Băuturi Tari" }, // Categorie nouă
-                { id: 'shoturi', name: "Shot-uri" },           // Categorie nouă
-                { id: 'bauturi_fara_alcool', name: "Fără Alcool / Limonade" },
-                { id: 'bauturi_calde', name: "Băuturi Calde" }, // Categorie nouă
-                { id: 'vinuri', name: "Vinuri, Spumante & Divin" },
-                { id: 'inghetata', name: "Înghețată" },
-                { id: 'mancare', name: "Mâncare Caldă" },
-                { id: 'snackuri', name: "Snack-uri & Platouri" }
-            ];
+    // Inițializează aplicația la încărcarea paginii.
+    function initApp() {
+        renderCategories(); // Afișează categoriile.
+        renderProducts();   // Afișează produsele.
+        updateCartUI();     // Actualizează interfața coșului.
+    }
 
-            categoriesBar.innerHTML = categories.map(cat => `
-                <button class="cat-btn ${currentCategory === cat.id ? 'active' : ''}"
-                        onclick="filterCategory('${cat.id}')">${cat.name}</button>
-            `).join('');
-        }
+    // Schimbă limba aplicației și actualizează textele afișate.
+    function changeLanguage(lang) {
+        currentLang = lang;
 
-        function filterCategory(catId) {
-            currentCategory = catId;
-            renderCategories();
-            renderProducts();
-        }
+        // Selectează elementele HTML după ID și schimbă textul lor.
+        document.getElementById('cartTitleText').innerText =
+            translations[lang].cartTitle;
 
-        function renderProducts() {
-            const grid = document.getElementById('productsGrid');
-            const filtered = currentCategory === 'all'
-                ? productsData
-                : productsData.filter(p => p.category === currentCategory);
+        document.getElementById('totalLabelText').innerText =
+            translations[lang].total;
 
-            grid.innerHTML = filtered.map(p => {
-                const selectedPrice = p.variants[0].price;
-                return `
-                    <div class="product-card">
-                        <img src="${p.img}" class="product-img" alt="${p.name[currentLang]}">
-                        <div class="product-info">
-                            <h3 class="product-title">${p.name[currentLang]}</h3>
-                            <p class="product-desc">${p.desc[currentLang]}</p>
+        document.getElementById('checkoutBtnText').innerText =
+            translations[lang].checkout;
 
-                            <select class="variant-select" id="select-${p.id}" onchange="updateCardPrice(${p.id})">
-                                ${p.variants.map((v, index) => `<option value="${index}">${v.size} - ${v.price} MDL</option>`).join('')}
-                            </select>
+        // Reafișează conținutul în limba selectată.
+        renderCategories();
+        renderProducts();
+        updateCartUI();
+    }
 
-                            <div class="card-bottom">
-                                <span class="price" id="price-${p.id}">${selectedPrice} MDL</span>
-                                <button class="add-btn" onclick="addToCart(${p.id})">+ Adaugă</button>
-                            </div>
+    // Generează dinamic butoanele pentru categoriile meniului.
+    function renderCategories() {
+        const categoriesBar =
+            document.getElementById('categoriesBar');
+
+        // Fiecare obiect conține ID-ul categoriei și numele ei.
+        const categories = [
+            { id: 'all', name: translations[currentLang].all },
+            { id: 'bere_draft', name: "Bere Draft" },
+            { id: 'bere_stycla', name: "Bere Sticlă" },
+            { id: 'cocktail', name: "Cocktailuri" },
+            { id: 'bauturi_tari', name: "Băuturi Tari" },
+            { id: 'shoturi', name: "Shot-uri" },
+            { id: 'bauturi_fara_alcool', name: "Fără Alcool / Limonade" },
+            { id: 'bauturi_calde', name: "Băuturi Calde" },
+            { id: 'vinuri', name: "Vinuri, Spumante & Divin" },
+            { id: 'inghetata', name: "Înghețată" },
+            { id: 'mancare', name: "Mâncare Caldă" },
+            { id: 'snackuri', name: "Snack-uri & Platouri" }
+        ];
+
+        // map() transformă fiecare categorie într-un buton HTML.
+        // Operatorul ternar adaugă clasa 'active' categoriei selectate.
+        // join('') unește toate butoanele într-un singur șir HTML.
+        categoriesBar.innerHTML = categories.map(cat => `
+            <button class="cat-btn ${currentCategory === cat.id ? 'active' : ''}"
+                    onclick="filterCategory('${cat.id}')">
+                ${cat.name}
+            </button>
+        `).join('');
+    }
+
+    // Selectează o categorie și afișează produsele corespunzătoare.
+    function filterCategory(catId) {
+        currentCategory = catId;
+
+        // Actualizează categoria activă și lista de produse.
+        renderCategories();
+        renderProducts();
+    }
+
+    // Afișează produsele și permite selectarea variantelor.
+    function renderProducts() {
+        const grid = document.getElementById('productsGrid');
+
+        // Dacă este selectată categoria 'all', afișăm toate produsele.
+        // Altfel, filter() păstrează doar produsele din categoria selectată.
+        const filtered = currentCategory === 'all'
+            ? productsData
+            : productsData.filter(
+                p => p.category === currentCategory
+            );
+
+        // map() transformă fiecare produs într-un card HTML.
+        grid.innerHTML = filtered.map(p => {
+
+            // Prețul inițial este prețul primei variante.
+            const selectedPrice = p.variants[0].price;
+
+            return `
+                <div class="product-card">
+                    <img src="${p.img}"
+                         class="product-img"
+                         alt="${p.name[currentLang]}">
+
+                    <div class="product-info">
+                        <h3 class="product-title">
+                            ${p.name[currentLang]}
+                        </h3>
+
+                        <p class="product-desc">
+                            ${p.desc[currentLang]}
+                        </p>
+
+                        <!--
+                            Fiecare opțiune reprezintă o variantă.
+                            value păstrează indexul variantei în array.
+                            onchange apelează funcția care actualizează prețul.
+                        -->
+                        <select class="variant-select"
+                                id="select-${p.id}"
+                                onchange="updateCardPrice(${p.id})">
+
+                            ${p.variants.map((v, index) => `
+                                <option value="${index}">
+                                    ${v.size} - ${v.price} MDL
+                                </option>
+                            `).join('')}
+                        </select>
+
+                        <div class="card-bottom">
+                            <!-- Elementul în care afișăm prețul selectat. -->
+                            <span class="price" id="price-${p.id}">
+                                ${selectedPrice} MDL
+                            </span>
+
+                            <!-- La click, produsul este adăugat în coș. -->
+                            <button class="add-btn"
+                                    onclick="addToCart(${p.id})">
+                                + Adaugă
+                            </button>
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Actualizează prețul afișat când utilizatorul schimbă varianta.
+    function updateCardPrice(productId) {
+
+        // find() caută produsul cu ID-ul primit.
+        const product = productsData.find(
+            p => p.id === productId
+        );
+
+        // value returnează indexul variantei selectate.
+        const selectedIndex =
+            document.getElementById(`select-${productId}`).value;
+
+        // Găsește elementul HTML în care este afișat prețul.
+        const priceSpan =
+            document.getElementById(`price-${productId}`);
+
+        // Actualizează textul cu prețul variantei alese.
+        priceSpan.innerText =
+            `${product.variants[selectedIndex].price} MDL`;
+    }
+
+    // Adaugă un produs sau mărește cantitatea dacă există deja în coș.
+    function addToCart(productId) {
+
+        // Identifică produsul după ID.
+        const product = productsData.find(
+            p => p.id === productId
+        );
+
+        // Citește indexul variantei selectate.
+        const selectedIndex =
+            document.getElementById(`select-${productId}`).value;
+
+        // Obține datele variantei selectate.
+        const variant = product.variants[selectedIndex];
+
+        // findIndex() caută același produs și aceeași variantă.
+        // Returnează indexul găsit sau -1 dacă nu există în coș.
+        const existingIndex = cart.findIndex(
+            item =>
+                item.id === productId &&
+                item.variantSize === variant.size
+        );
+
+        if (existingIndex > -1) {
+            // Produsul există deja: mărim cantitatea cu 1.
+            cart[existingIndex].qty += 1;
+        } else {
+            // Produsul nu există: adăugăm un obiect nou în array.
+            cart.push({
+                id: product.id,
+                name: product.name[currentLang],
+                variantSize: variant.size,
+                price: variant.price,
+                qty: 1
+            });
         }
 
-        function updateCardPrice(productId) {
-            const product = productsData.find(p => p.id === productId);
-            const selectedIndex = document.getElementById(`select-${productId}`).value;
-            const priceSpan = document.getElementById(`price-${productId}`);
-            priceSpan.innerText = `${product.variants[selectedIndex].price} MDL`;
+        // Recalculăm totalurile și afișăm coșul.
+        updateCartUI();
+        toggleCart(true);
+    }
+
+    // Modifică numărul de bucăți din coș.
+    function updateQty(index, change) {
+
+        // change este +1 pentru creștere sau -1 pentru scădere.
+        cart[index].qty += change;
+
+        // Dacă numărul de bucăți ajunge la 0, eliminăm produsul.
+        // splice(index, 1) șterge un element din array.
+        if (cart[index].qty <= 0) {
+            cart.splice(index, 1);
         }
 
-        function addToCart(productId) {
-            const product = productsData.find(p => p.id === productId);
-            const selectedIndex = document.getElementById(`select-${productId}`).value;
-            const variant = product.variants[selectedIndex];
+        // Actualizăm interfața după modificare.
+        updateCartUI();
+    }
 
-            const existingIndex = cart.findIndex(item => item.id === productId && item.variantSize === variant.size);
+    // Afișează produsele din coș și calculează totalurile.
+    function updateCartUI() {
+        const cartItemsContainer =
+            document.getElementById('cartItems');
 
-            if (existingIndex > -1) {
-                cart[existingIndex].qty += 1;
-            } else {
-                cart.push({
-                    id: product.id,
-                    name: product.name[currentLang],
-                    variantSize: variant.size,
-                    price: variant.price,
-                    qty: 1
-                });
-            }
-            updateCartUI();
-            toggleCart(true);
+        const cartCount =
+            document.getElementById('cartCount');
+
+        const cartTotalHeader =
+            document.getElementById('cartTotalHeader');
+
+        const cartTotalDrawer =
+            document.getElementById('cartTotalDrawer');
+
+        // Verificăm dacă array-ul coșului este gol.
+        if (cart.length === 0) {
+            cartItemsContainer.innerHTML = `
+                <p style="text-align:center; color:#888;">
+                    ${translations[currentLang].emptyCart}
+                </p>
+            `;
+
+            // Resetăm numărul de produse și totalurile.
+            cartCount.innerText = '0';
+            cartTotalHeader.innerText = '0 MDL';
+            cartTotalDrawer.innerText = '0 MDL';
+
+            // Oprim funcția pentru că nu există produse de afișat.
+            return;
         }
 
-        function updateQty(index, change) {
-            cart[index].qty += change;
-            if (cart[index].qty <= 0) cart.splice(index, 1);
-            updateCartUI();
-        }
+        // Inițializăm suma totală și numărul total de bucăți.
+        let total = 0;
+        let totalItems = 0;
 
-        function updateCartUI() {
-            const cartItemsContainer = document.getElementById('cartItems');
-            const cartCount = document.getElementById('cartCount');
-            const cartTotalHeader = document.getElementById('cartTotalHeader');
-            const cartTotalDrawer = document.getElementById('cartTotalDrawer');
+        // Generăm un element HTML pentru fiecare produs din coș.
+        cartItemsContainer.innerHTML = cart.map((item, index) => {
 
-            if (cart.length === 0) {
-                cartItemsContainer.innerHTML = `<p style="text-align:center; color:#888;">${translations[currentLang].emptyCart}</p>`;
-                cartCount.innerText = '0';
-                cartTotalHeader.innerText = '0 MDL';
-                cartTotalDrawer.innerText = '0 MDL';
-                return;
-            }
+            // Calculăm subtotalul produsului.
+            const itemTotal = item.price * item.qty;
 
-            let total = 0;
-            let totalItems = 0;
+            // Adunăm subtotalurile și cantitățile.
+            total += itemTotal;
+            totalItems += item.qty;
 
-            cartItemsContainer.innerHTML = cart.map((item, index) => {
-                const itemTotal = item.price * item.qty;
-                total += itemTotal;
-                totalItems += item.qty;
-                return `
-                    <div class="cart-item">
-                        <div class="item-details">
-                            <h4>${item.name}</h4>
-                            <p>${item.variantSize} | ${item.price} MDL</p>
-                            <div class="qty-controls">
-                                <button class="qty-btn" onclick="updateQty(${index}, -1)">-</button>
-                                <span>${item.qty}</span>
-                                <button class="qty-btn" onclick="updateQty(${index}, 1)">+</button>
-                            </div>
+            return `
+                <div class="cart-item">
+                    <div class="item-details">
+                        <h4>${item.name}</h4>
+
+                        <p>
+                            ${item.variantSize} | ${item.price} MDL
+                        </p>
+
+                        <div class="qty-controls">
+                            <!-- Scade cantitatea cu 1. -->
+                            <button class="qty-btn"
+                                    onclick="updateQty(${index}, -1)">
+                                -
+                            </button>
+
+                            <span>${item.qty}</span>
+
+                            <!-- Crește cantitatea cu 1. -->
+                            <button class="qty-btn"
+                                    onclick="updateQty(${index}, 1)">
+                                +
+                            </button>
                         </div>
-                        <div style="font-weight:bold;">${itemTotal} MDL</div>
                     </div>
-                `;
-            }).join('');
 
-            cartCount.innerText = totalItems;
-            cartTotalHeader.innerText = `${total} MDL`;
-            cartTotalDrawer.innerText = `${total} MDL`;
+                    <!-- Afișăm subtotalul produsului. -->
+                    <div style="font-weight:bold;">
+                        ${itemTotal} MDL
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Actualizăm numărul total de unități și suma de plată.
+        cartCount.innerText = totalItems;
+        cartTotalHeader.innerText = `${total} MDL`;
+        cartTotalDrawer.innerText = `${total} MDL`;
+    }
+
+    // Deschide sau închide panoul coșului.
+    function toggleCart(open) {
+
+        // Adaugă clasa CSS 'open' dacă open este true.
+        // O elimină dacă open este false.
+        document.getElementById('cartOverlay')
+            .classList.toggle('open', open);
+
+        document.getElementById('cartDrawer')
+            .classList.toggle('open', open);
+    }
+
+    // Salvează coșul și deschide pagina de checkout.
+    function goToCheckout() {
+
+        // Nu permitem continuarea cu un coș gol.
+        if (cart.length === 0) {
+            return alert("Coșul este gol!");
         }
 
-        function toggleCart(open) {
-            document.getElementById('cartOverlay').classList.toggle('open', open);
-            document.getElementById('cartDrawer').classList.toggle('open', open);
-        }
+        // JSON.stringify() transformă array-ul în text JSON.
+        // localStorage păstrează datele în browser.
+        localStorage.setItem(
+            'hog_pub_cart',
+            JSON.stringify(cart)
+        );
 
-        function goToCheckout() {
-            if (cart.length === 0) return alert("Coșul este gol!");
-            localStorage.setItem('hog_pub_cart', JSON.stringify(cart));
-            window.location.href = 'checkout.html';
-        }
+        // Navigăm către pagina de finalizare a comenzii.
+        window.location.href = 'checkout.html';
+    }
 
-        initApp();
-    </script>
+    // Pornim aplicația și afișăm conținutul inițial.
+    initApp();
+</script>
 </body>
 </html>
