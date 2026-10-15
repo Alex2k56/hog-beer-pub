@@ -1,12 +1,21 @@
+
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <!-- Setări de bază pentru documentul HTML -->
     <meta charset="UTF-8">
+    <!-- Permite adaptarea paginii la ecrane de telefon, tabletă și calculator -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Titlul afișat în fila browserului -->
     <title>Checkout - HOG BEER PUB</title>
-    <!-- Includem biblioteca EmailJS pentru trimiterea e-mailurilor (Partea 4) -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <!-- Importăm biblioteca EmailJS pentru trimiterea e-mailurilor din JavaScript -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
     <style>
+        /* Variabile CSS globale, reutilizate pentru culorile paginii */
         :root {
             --primary: #d97706;
             --bg-dark: #111827;
@@ -14,45 +23,68 @@
             --text-light: #f3f4f6;
             --text-muted: #9ca3af;
         }
+
+        /* Stilurile generale ale paginii */
         body {
             font-family: Arial, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-light);
             margin: 0;
             padding: 20px;
+
+            /* Folosim Flexbox pentru poziționarea conținutului */
             display: flex;
             justify-content: center;
         }
+
+        /* Containerul principal al paginii de checkout */
         .checkout-container {
             display: flex;
             gap: 20px;
             max-width: 1000px;
             width: 100%;
+
+            /* Permite trecerea secțiunilor pe rândul următor
+               când nu există suficient spațiu pe ecran */
             flex-wrap: wrap;
         }
+
+        /* Stilurile comune celor două secțiuni: formular și comandă */
         .checkout-section {
             background-color: var(--bg-card);
             padding: 25px;
             border-radius: 12px;
+
+            /* Secțiunile împart spațiul disponibil */
             flex: 1;
             min-width: 300px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+
+            /* Adăugăm o umbră pentru efect vizual */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
+
+        /* Aspectul titlurilor din secțiuni */
         h2 {
             color: var(--primary);
             margin-top: 0;
             border-bottom: 1px solid #374151;
             padding-bottom: 10px;
         }
+
+        /* Spațierea dintre câmpurile formularului */
         .form-group {
             margin-bottom: 15px;
         }
+
+        /* Etichetele câmpurilor */
         .form-group label {
             display: block;
             margin-bottom: 5px;
             font-size: 14px;
             color: var(--text-muted);
         }
+
+        /* Aspectul câmpurilor de introducere a datelor */
         .form-group input {
             width: 100%;
             padding: 10px;
@@ -60,12 +92,18 @@
             border: 1px solid #4b5563;
             color: white;
             border-radius: 6px;
+
+            /* Include padding-ul în lățimea totală a câmpului */
             box-sizing: border-box;
         }
+
+        /* Evidențiem câmpul atunci când utilizatorul îl selectează */
         .form-group input:focus {
             outline: none;
             border-color: var(--primary);
         }
+
+        /* Afișarea unui produs în sumarul comenzii */
         .order-item {
             display: flex;
             justify-content: space-between;
@@ -73,6 +111,8 @@
             padding: 10px 0;
             font-size: 14px;
         }
+
+        /* Evidențiem valoarea totală de plată */
         .order-total {
             display: flex;
             justify-content: space-between;
@@ -81,6 +121,8 @@
             color: var(--primary);
             margin-top: 15px;
         }
+
+        /* Aspectul butonului de achitare */
         .pay-btn {
             width: 100%;
             background-color: var(--primary);
@@ -92,15 +134,23 @@
             border-radius: 8px;
             cursor: pointer;
             margin-top: 20px;
+
+            /* Tranziție pentru schimbările vizuale */
             transition: 0.3s;
         }
+
+        /* Schimbăm culoarea butonului când cursorul este deasupra */
         .pay-btn:hover {
             background-color: #b45309;
         }
+
+        /* Aspectul butonului atunci când este dezactivat */
         .pay-btn:disabled {
             background-color: #4b5563;
             cursor: not-allowed;
         }
+
+        /* Linkul care permite revenirea la meniu */
         .back-link {
             display: inline-block;
             margin-bottom: 20px;
@@ -108,55 +158,101 @@
             text-decoration: none;
             font-weight: bold;
         }
-        .back-link:hover { text-decoration: underline; }
 
-        /* Modal Succes */
+        /* Subliniem linkul la trecerea cursorului */
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Fereastra modală de confirmare: ascunsă inițial */
         #successModal {
             display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            justify-content: center; align-items: center;
+
+            /* Acoperă întreaga fereastră a browserului */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+
+            /* Fundal întunecat în spatele mesajului */
+            background: rgba(0, 0, 0, 0.8);
+
+            /* Centrează mesajul de confirmare */
+            justify-content: center;
+            align-items: center;
+
+            /* Afișează modalul deasupra celorlalte elemente */
             z-index: 1000;
         }
+
+        /* Conținutul ferestrei de confirmare */
         .modal-content {
-            background: var(--bg-card); padding: 40px; border-radius: 12px;
-            text-align: center; max-width: 400px;
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
         }
-        .modal-content h3 { color: #10b981; font-size: 24px; margin-bottom: 10px; }
+
+        /* Evidențiem titlul mesajului de succes */
+        .modal-content h3 {
+            color: #10b981;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
-<body>
 
+<body>
     <div>
+        <!-- Link pentru revenirea la meniul restaurantului -->
         <a href="/" class="back-link">← Înapoi la Meniu</a>
 
         <div class="checkout-container">
-            <!-- PARTEA STÂNGĂ: Formularul de date -->
+
+            <!-- SECȚIUNEA 1: Datele de contact și câmpurile de card -->
             <div class="checkout-section">
                 <h2>1. Datele tale de contact</h2>
+
                 <div class="form-group">
                     <label>Nume și Prenume *</label>
-                    <input type="text" id="clientName" required placeholder="Ex: Ion Popescu">
+                    <!-- Câmp pentru numele clientului -->
+                    <input type="text" id="clientName"
+                        required placeholder="Ex: Ion Popescu">
                 </div>
+
                 <div class="form-group">
                     <label>Număr de Telefon *</label>
-                    <input type="tel" id="clientPhone" required placeholder="Ex: 069 123 456">
+                    <!-- type="tel" este potrivit pentru introducerea unui număr de telefon -->
+                    <input type="tel" id="clientPhone"
+                        required placeholder="Ex: 069 123 456">
                 </div>
+
                 <div class="form-group">
                     <label>E-mail (pentru bonul fiscal) *</label>
-                    <input type="email" id="clientEmail" required placeholder="Ex: ion@mail.md">
+                    <!-- type="email" permite browserului să verifice formatul adresei -->
+                    <input type="email" id="clientEmail"
+                        required placeholder="Ex: ion@mail.md">
                 </div>
 
                 <h2 style="margin-top: 30px;">2. Plata cu Cardul</h2>
+
                 <div class="form-group">
                     <label>Număr Card (Test/Fictiv)</label>
-                    <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
+                    <!-- Câmp demonstrativ, nu este conectat la un procesator de plăți -->
+                    <input type="text"
+                        placeholder="0000 0000 0000 0000"
+                        maxlength="19">
                 </div>
+
+                <!-- Flexbox așază data expirării și CVV unul lângă altul -->
                 <div style="display: flex; gap: 15px;">
                     <div class="form-group" style="flex: 1;">
                         <label>Data Expirării</label>
                         <input type="text" placeholder="LL/AA" maxlength="5">
                     </div>
+
                     <div class="form-group" style="flex: 1;">
                         <label>CVV</label>
                         <input type="text" placeholder="123" maxlength="3">
@@ -164,99 +260,163 @@
                 </div>
             </div>
 
-            <!-- PARTEA DREAPTĂ: Sumarul Comenzii -->
+            <!-- SECȚIUNEA 2: Produsele comandate și suma de achitat -->
             <div class="checkout-section">
                 <h2>3. Sumar Comandă</h2>
+
+                <!-- JavaScript va introduce aici produsele salvate în localStorage -->
                 <div id="orderSummary">
-                    <!-- Aici se vor genera produsele din localStorage -->
                 </div>
+
+                <!-- Totalul comenzii, calculat în JavaScript -->
                 <div class="order-total">
                     <span>Total Achitare:</span>
                     <span id="finalTotal">0 MDL</span>
                 </div>
 
-                <button class="pay-btn" id="payButton" onclick="processPayment()">💳 Achită Acum</button>
+                <!-- La apăsare, se execută funcția processPayment() -->
+                <button class="pay-btn" id="payButton"
+                    onclick="processPayment()">
+                    💳 Achită Acum
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL CONFIRMARE (Apare după plată) -->
+    <!-- MODAL: mesajul afișat după simularea procesării comenzii -->
     <div id="successModal">
         <div class="modal-content">
             <h3>Tranzacție Reușită! 🎉</h3>
             <p>Comanda ta a fost trimisă către bar. Vei primi confirmarea pe e-mail.</p>
-            <button class="pay-btn" onclick="window.location.href='/'">Întoarce-te la Meniu</button>
+
+            <!-- Revenire la meniul principal -->
+            <button class="pay-btn"
+                onclick="window.location.href='/'">
+                Întoarce-te la Meniu
+            </button>
         </div>
     </div>
 
     <script>
-        // 1. Inițializăm EmailJS (vei pune cheile tale mai târziu)
+        // 1. INIȚIALIZAREA EMAILJS
+        // Aici se poate inițializa biblioteca după crearea contului EmailJS.
+        // Înlocuiește cheia demonstrativă cu cheia publică reală.
+        // Inițializarea este comentată momentan.
         (function() {
             // emailjs.init("CHEIA_TA_PUBLICA");
         })();
 
+        // Variabilă globală: va conține produsele din comandă.
         let finalCart = [];
+
+        // Variabilă globală: păstrează suma totală calculată.
         let finalAmount = 0;
 
-        // 2. Când se încarcă pagina, luăm datele din index.html
+
+        // 2. ÎNCĂRCAREA COMENZII SALVATE
+        // Așteptăm ca documentul HTML să fie încărcat înainte de a
+        // accesa elementele paginii.
         document.addEventListener("DOMContentLoaded", () => {
+
+            // Citim din localStorage coșul salvat pe pagina meniului.
             const savedCart = localStorage.getItem('hog_pub_cart');
 
+            // Dacă nu există un coș salvat, informăm utilizatorul
+            // și îl trimitem înapoi la meniu.
             if (!savedCart) {
                 alert("Coșul este gol! Te redirecționăm la meniu.");
                 window.location.href = "index.html";
                 return;
             }
 
+            // JSON.parse transformă textul JSON într-un array JavaScript.
             finalCart = JSON.parse(savedCart);
+
+            // După încărcarea produselor, afișăm sumarul comenzii.
             renderOrderSummary();
         });
 
-        // 3. Afișăm produsele în sumar
+
+        // 3. AFIȘAREA SUMARULUI COMENZII
         function renderOrderSummary() {
+
+            // Selectăm elementul în care vor apărea produsele.
             const container = document.getElementById('orderSummary');
+
+            // Golim conținutul existent pentru a evita duplicarea.
             container.innerHTML = '';
+
+            // Resetăm totalul înainte de a recalcula comanda.
             finalAmount = 0;
 
+            // Parcurgem fiecare produs din coș.
             finalCart.forEach(item => {
+
+                // Calculăm prețul total pentru acest produs:
+                // prețul unei bucăți înmulțit cu numărul de bucăți.
                 const totalItemPrice = item.price * item.qty;
+
+                // Adăugăm prețul produsului la totalul comenzii.
                 finalAmount += totalItemPrice;
 
+                // Construim HTML-ul produsului folosind un template literal.
+                // ${...} introduce valorile variabilelor în textul HTML.
                 container.innerHTML += `
                     <div class="order-item">
                         <div>
                             <strong>${item.qty}x</strong> ${item.name} <br>
-                            <span style="color: #9ca3af; font-size: 12px;">${item.variantSize}</span>
+                            <span style="color: #9ca3af; font-size: 12px;">
+                                ${item.variantSize}
+                            </span>
                         </div>
                         <div>${totalItemPrice} MDL</div>
                     </div>
                 `;
             });
 
-            document.getElementById('finalTotal').innerText = `${finalAmount} MDL`;
+            // Actualizăm totalul vizibil în pagina de checkout.
+            document.getElementById('finalTotal').innerText =
+                `${finalAmount} MDL`;
         }
 
-        // 4. Procesarea "Plății" și trimiterea e-mailurilor
+
+        // 4. PROCESAREA COMENZII ȘI SIMULAREA PLĂȚII
         function processPayment() {
+
+            // Preluăm valorile introduse de client în formular.
             const name = document.getElementById('clientName').value;
             const phone = document.getElementById('clientPhone').value;
             const email = document.getElementById('clientEmail').value;
+
+            // Selectăm butonul pentru a-i modifica textul și starea.
             const btn = document.getElementById('payButton');
 
+            // Verificăm dacă toate cele trei câmpuri de contact sunt completate.
             if (!name || !phone || !email) {
                 alert("Te rugăm să completezi toate datele de contact (Nume, Telefon, E-mail)!");
                 return;
             }
 
-            // Simulăm încărcarea procesatorului de plată (2 secunde)
+            // Afișăm un mesaj de încărcare și dezactivăm butonul
+            // pentru a evita apăsările repetate în timpul simulării.
             btn.innerText = "⏳ Se procesează...";
             btn.disabled = true;
 
+            // setTimeout execută funcția după o întârziere de 2000 ms,
+            // adică două secunde.
             setTimeout(() => {
-                // Generăm un bon sub formă de text pentru e-mail
-                let orderText = finalCart.map(item => `${item.qty}x ${item.name} (${item.variantSize}) - ${item.price * item.qty} MDL`).join("\\n");
 
-                // Parametrii pe care îi trimitem către EmailJS
+                // Transformăm produsele din coș într-un text pentru e-mail.
+                // map() construiește un text pentru fiecare produs,
+                // iar join() unește textele folosind un separator.
+                let orderText = finalCart
+                    .map(item =>
+                        `${item.qty}x ${item.name} (${item.variantSize}) - ${item.price * item.qty} MDL`
+                    )
+                    .join("\\n");
+
+                // Pregătim datele care pot fi trimise către un șablon EmailJS.
+                // Numele proprietăților trebuie să corespundă șablonului configurat.
                 const templateParams = {
                     client_name: name,
                     client_phone: phone,
@@ -265,19 +425,29 @@
                     total_amount: finalAmount + " MDL"
                 };
 
-                /* AICI VOM ACTIVA TRIMITEREA REALĂ DUPĂ CE FACI CONTUL
-                emailjs.send("SERVICE_ID", "TEMPLATE_ID", templateParams)
-                    .then(function(response) {
-                        console.log("SUCCESS!", response.status, response.text);
-                    }, function(error) {
-                        console.log("FAILED...", error);
-                    });
-                */
+                /*
+                 * TRIMITEREA REALĂ A E-MAILULUI
+                 *
+                 * Acest cod este dezactivat momentan.
+                 * Pentru a-l folosi, trebuie configurate un serviciu EmailJS,
+                 * un șablon și cheia publică.
+                 *
+                 * emailjs.send("SERVICE_ID", "TEMPLATE_ID", templateParams)
+                 *     .then(function(response) {
+                 *         console.log("SUCCESS!", response.status, response.text);
+                 *     }, function(error) {
+                 *         console.log("FAILED...", error);
+                 *     });
+                 *
+                 * În versiunea actuală, nu se trimite niciun e-mail.
+                 */
 
-                // Afișăm succesul
+                // Afișăm fereastra de confirmare.
+                // ATENȚIE: acest mesaj indică doar finalizarea simulării,
+                // nu confirmă o plată reală sau trimiterea unui e-mail.
                 document.getElementById('successModal').style.display = "flex";
 
-                // Golim coșul pentru o nouă comandă
+                // Ștergem coșul salvat local pentru următoarea comandă.
                 localStorage.removeItem('hog_pub_cart');
 
             }, 2000);
