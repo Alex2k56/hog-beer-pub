@@ -1,6 +1,10 @@
 # 🍺 Hog Beer Pub — A Casual Front-End Project
 
 <img width="1837" height="812" alt="Captură de ecran 2026-08-22 125707" src="https://github.com/user-attachments/assets/13278a02-51a7-46e9-be71-41f908b209dd" />
+<img width="1855" height="875" alt="Captură de ecran 2026-08-22 125914" src="https://github.com/user-attachments/assets/7baa8eb5-0ca9-4d39-ac27-153c12d04829" />
+<img width="1855" height="875" alt="Captură de ecran 2026-08-22 125914" src="https://github.com/user-attachments/assets/7938057d-57f2-4c03-b073-59eff2c2f893" />
+
+
 
 
 
