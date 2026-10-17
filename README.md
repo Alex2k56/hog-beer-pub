@@ -1,6 +1,8 @@
 # 🍺 Hog Beer Pub — A Casual Front-End Project
 
-👋 **Hey there! Welcome to the repository.**
+<img width="1837" height="812" alt="Captură de ecran 2026-08-22 125707" src="https://github.com/user-attachments/assets/13278a02-51a7-46e9-be71-41f908b209dd" />
+
+
 
 This is a personal web project I built for a craft beer pub. The goal was simple: create a clean, responsive, and ultra-fast web page where customers can quickly check what's on tap, browse food options, and book a table without loading a heavy PDF or navigating through a slow WordPress site.
 
@@ -52,3 +54,7 @@ filterBtns.forEach(btn => {
     });
   });
 });
+
+
+
+
